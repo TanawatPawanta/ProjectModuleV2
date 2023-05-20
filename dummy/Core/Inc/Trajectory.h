@@ -17,8 +17,8 @@ typedef struct TrajectoryParameter
 	float32_t start_pos;
 	float32_t final_pos;
 	float32_t displacement;
-	int32_t  v_max;
-	int32_t  a_max;
+	float32_t  v_max;
+	float32_t  a_max;
 	float32_t current_pos;
 	float32_t current_velo;
 	float32_t current_acc;
@@ -28,9 +28,9 @@ typedef struct TrajectoryParameter
 	int profile;
 }Trajectory;
 
-void SetTrajectoryConstrain(Trajectory* Tj, int32_t  vmax,int32_t  amax);
+void SetTrajectoryConstrainAndInit(Trajectory* Tj, float32_t vmax,float32_t amax);
 void TrajectoryGenerator(Trajectory* Tj);
-void TrajectoryEvaluator(Trajectory* Tj,uint64_t time);
+void TrajectoryEvaluator(Trajectory* Tj,float64_t time);
 
 
 #endif /* INC_TRAJECTORY_H_ */

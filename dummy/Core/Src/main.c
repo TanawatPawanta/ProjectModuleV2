@@ -73,9 +73,9 @@ float32_t ff ;
 Trajectory Traj;
 //46,422 pulse:680 mm
 //max velo 204,800 pulse/s
-int32_t vmax = 800;
-int32_t  amax = 1400;
-uint64_t time = 0;
+float32_t vmax = 900;
+float32_t  amax = 1400;
+float64_t time = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -135,7 +135,8 @@ int main(void)
 
   InitKalmanStruct(&KF,Var_Q,Var_R);
   InitReadEncoder(&ReadEncoderParam, 1000);
-  SetTrajectoryConstrainAndInit(&Traj, vmax, amax);
+  SetTrajectoryConstrainAndInit(&Traj, 900, 1400);
+
 
   arm_mat_init_f32(&mat_A, 3, 3,KF.A);//3x3
   arm_mat_init_f32(&mat_x_hat, 3, 1, KF.x_hat);
@@ -181,7 +182,7 @@ int main(void)
 			  break;
 		  case 0:	//incomplete
 			  TrajectoryEvaluator(&Traj,time);
-			  time += ReadEncoderParam.samplingTime;
+			  time += ReadEncoderParam.samplingTime*0.000001;
 			  break;
 		  case 2:	//idle
 			  if(Traj.final_pos != Traj.start_pos)
@@ -190,7 +191,10 @@ int main(void)
 			  	}
 			  break;
 		  }
+//		  TrajectoryGenerator(&Traj);
+//		  TrajectoryEvaluator(&Traj,time);
 		  timestamp = currentTime + ReadEncoderParam.samplingTime;
+
 		  QEIEncoderPositionVelocity_Update();
 		  ReadPos = __HAL_TIM_GET_COUNTER(&htim2);
 		  KF.z = QEIData.QEIVelocity;
