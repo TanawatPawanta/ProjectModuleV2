@@ -17,8 +17,8 @@ typedef struct KalmanFilterVariable
 	float32_t x_hat[3];  	// State estimate vector [x, dx, d2x]
 	float32_t P[9];      	// Covariance matrix
 	float32_t Q[9];      	// Process noise covariance matrix
-	float32_t R ;   	// Measurement noise variance
-	float32_t var_Q; 	// measurement variance
+	float R ;   	// Measurement noise variance
+	float var_Q; 	// measurement variance
 	float32_t z ;   		// Measurement value
 	//Matrix
 	float32_t A[3 * 3] ;

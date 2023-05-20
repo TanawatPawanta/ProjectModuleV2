@@ -14,13 +14,13 @@ extern arm_matrix_instance_f32 mat_P, mat_P_minus, mat_Q;
 extern arm_matrix_instance_f32 mat_C, mat_R, mat_S, mat_K;
 extern arm_matrix_instance_f32 mat_temp3x3A,mat_temp3x3B, mat_temp3x1,mat_temp1x3, mat_temp1x1;
 
-void InitKalmanStruct(Kalman* KF,float32_t q,float32_t r)
+void InitKalmanStruct(Kalman* KF,float q,float r)
 {
 	KF->R = r;
 	KF->var_Q = q;
 	KF->D = 0;
 	float32_t a[9] = {
-			1, 0.001, 0.5 * 0.001 * 0.001,
+			1, 0.001, 0.0000005,
 			0, 1, 0.001,
 			0, 0, 1
 	};
@@ -34,6 +34,7 @@ void InitKalmanStruct(Kalman* KF,float32_t q,float32_t r)
 	{
 		KF->A[i] = a[i];
 		KF->I[i] = iden[i];
+		KF->P[i] = 0;
 	}
 	float32_t b[3] = {
 			0, 0, 0
@@ -41,9 +42,15 @@ void InitKalmanStruct(Kalman* KF,float32_t q,float32_t r)
 	float32_t c[3] = {
 			0, 1, 0
 	};
+	float32_t x[3] = {
+			0, 0, 0
+	};
+	float32_t p[3] = {
+				0, 0, 0
+		};
 	float32_t g[3] = {
 			0.001 * 0.001 * 0.001 / 6,
-			0.5 * 0.001 * 0.001,
+			0.0000005,
 			0.001
 	};
 	for(i=0;i<3;i++)
@@ -51,8 +58,8 @@ void InitKalmanStruct(Kalman* KF,float32_t q,float32_t r)
 		KF->B[i] = b[i];
 		KF->C[i] = c[i];
 		KF->G[i] = g[i];
+		KF->x_hat[i] = 0;
 	}
-
 }
 
 void kalman_filter()
@@ -78,12 +85,12 @@ void kalman_filter()
     arm_mat_mult_f32(&mat_temp1x3, &mat_temp3x1, &mat_temp1x1);		//C*P*C^T
     arm_mat_add_f32(&mat_temp1x1, &mat_R, &mat_S);					//C*P*C^T + R
 
-    // Calculate Kalman gain: K = P_minus * C^T * S^(-1)
+    //==> Calculate Kalman gain: K = P_minus * C^T * S^(-1)
     arm_mat_inverse_f32(&mat_S, &mat_temp1x1);						//inv(S)
     arm_mat_mult_f32(&mat_P_minus, &mat_temp3x1, &mat_temp3x3A);	//P*CT
     arm_mat_mult_f32(&mat_temp3x3A, &mat_temp1x1, &mat_K);			//P*CT*inv(S)
 
-    // Update state estimate: x_hat = x_hat_minus + K * (z - C * x_hat_minus)
+    //==> Update state estimate: x_hat = x_hat_minus + K * (z - C * x_hat_minus)
     arm_mat_mult_f32(&mat_C, &mat_x_hat_minus, &mat_temp1x1);		//C*X
     //float32_t innovation = z - temp1x1;								//Z-C*X
     arm_mat_scale_f32(&mat_K, KF.z - KF.temp1x1, &mat_temp3x1);			//K*(Z-C*X)

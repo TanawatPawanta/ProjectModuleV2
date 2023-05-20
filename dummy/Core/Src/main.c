@@ -51,7 +51,8 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 Kalman KF;
-
+float32_t Var_R = 1;
+float32_t Var_Q = 100000;
 
 arm_matrix_instance_f32 mat_A, mat_x_hat, mat_x_hat_minus, mat_B, mat_u, mat_GT, mat_G,eye;
 arm_matrix_instance_f32 mat_P, mat_P_minus, mat_Q;
@@ -60,8 +61,8 @@ arm_matrix_instance_f32 mat_temp3x3A,mat_temp3x3B, mat_temp3x1,mat_temp1x3, mat_
 
 ReadEncoder ReadEncoderParam;
 QEIStructureTypedef QEIData = {0};
-
-
+float32_t EstimateVelocity;
+float32_t ff ;
 
 
 
@@ -116,10 +117,15 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM5_Init();
-  MX_TIM3_Init();
+  MX_TIM3_Init();-
   /* USER CODE BEGIN 2 */
-  InitKalmanStruct(&KF,0.001,0.1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);//Start PWM
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1|TIM_CHANNEL_2); //Start QEI
+  HAL_TIM_Base_Start_IT(&htim5);
+
+  InitKalmanStruct(&KF,Var_Q,Var_R);
   InitReadEncoder(&ReadEncoderParam, 1000);
+  ff = 0.1;
 
   arm_mat_init_f32(&mat_A, 3, 3,KF.A);//3x3
   arm_mat_init_f32(&mat_x_hat, 3, 1, KF.x_hat);
@@ -133,10 +139,10 @@ int main(void)
   arm_mat_init_f32(&mat_R, 1, 1, &KF.R);//1x1
   arm_mat_init_f32(&mat_S, 1, 1, KF.S);//1x1
   arm_mat_init_f32(&mat_K, 3, 1, KF.K);//3x1
-  arm_mat_init_f32(&mat_temp3x3A, 3, 3, KF.A);//3x3
-  arm_mat_init_f32(&mat_temp3x3B, 3, 3, KF.B);//3x3
+  arm_mat_init_f32(&mat_temp3x3A, 3, 3, KF.temp3x3A);//3x3
+  arm_mat_init_f32(&mat_temp3x3B, 3, 3, KF.temp3x3B);//3x3
   arm_mat_init_f32(&mat_temp3x1, 3, 1, KF.temp3x1);//3x1
-  arm_mat_init_f32(&mat_temp1x3, 1, 3, KF.temp3x1);//1x3
+  arm_mat_init_f32(&mat_temp1x3, 1, 3, KF.temp1x3);//1x3
   arm_mat_init_f32(&mat_temp1x1, 1, 1, &KF.temp1x1);//1x1
   arm_mat_init_f32(&mat_G, 3, 1, KF.G);//3x1
   arm_mat_init_f32(&mat_GT, 1, 3, KF.GT);//1x3
@@ -160,6 +166,7 @@ int main(void)
 		  QEIEncoderPositionVelocity_Update();
 		  KF.z = QEIData.QEIVelocity;
 		  kalman_filter();
+		  EstimateVelocity = KF.x_hat[1];
 	  }
 	  //--------------------------------------------------------------------PWM
 	  ReadEncoderParam.Pulse_Compare = ReadEncoderParam.MotorSetDuty * 10;

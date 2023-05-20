@@ -26,7 +26,7 @@ typedef struct ReadEncoderParam
 	uint32_t samplingTime; //us => 1000 Hz
 	//PWM
 	uint8_t MotorSetDuty;
-	uint8_t Pulse_Compare;
+	uint16_t Pulse_Compare;
 	uint8_t DIR;
 }ReadEncoder;
 
