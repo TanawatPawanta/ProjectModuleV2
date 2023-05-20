@@ -19,9 +19,19 @@ typedef struct QEI
 	float QEIVelocity;
 }QEIStructureTypedef;
 
+typedef struct ReadEncoderParam
+{
+	uint64_t _micros;
+	uint16_t PPR;
+	uint32_t samplingTime; //us => 1000 Hz
+	//PWM
+	uint8_t MotorSetDuty;
+	uint8_t Pulse_Compare;
+	uint8_t DIR;
+}ReadEncoder;
 
 
-
+void InitReadEncoder(ReadEncoder* Read, uint32_t samplingtime);
 uint64_t micros();
 void QEIEncoderPositionVelocity_Update();
 

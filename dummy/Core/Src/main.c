@@ -44,6 +44,7 @@
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim5;
 
 UART_HandleTypeDef huart2;
@@ -57,18 +58,11 @@ arm_matrix_instance_f32 mat_P, mat_P_minus, mat_Q;
 arm_matrix_instance_f32 mat_C, mat_R, mat_S, mat_K;
 arm_matrix_instance_f32 mat_temp3x3A,mat_temp3x3B, mat_temp3x1,mat_temp1x3, mat_temp1x1;
 
+ReadEncoder ReadEncoderParam;
 QEIStructureTypedef QEIData = {0};
 
 
-uint64_t _micros = 0;
 
-uint16_t PPR = 8192;
-
-uint32_t samplingTime = 1000; //us => 1000 Hz
-//PWM
-uint8_t MotorSetDuty = 0;
-uint8_t Pulse_Compare = 0;
-uint8_t DIR = 0;
 
 
 /* USER CODE END PV */
@@ -80,6 +74,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM5_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -121,8 +116,10 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM5_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   InitKalmanStruct(&KF,0.001,0.1);
+  InitReadEncoder(&ReadEncoderParam, 1000);
 
   arm_mat_init_f32(&mat_A, 3, 3,KF.A);//3x3
   arm_mat_init_f32(&mat_x_hat, 3, 1, KF.x_hat);
@@ -155,6 +152,19 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  static uint64_t timestamp = 0;
+	  int64_t currentTime = micros();
+	  if(currentTime > timestamp)
+	  {
+		  timestamp = currentTime + ReadEncoderParam.samplingTime;
+		  QEIEncoderPositionVelocity_Update();
+		  KF.z = QEIData.QEIVelocity;
+		  kalman_filter();
+	  }
+	  //--------------------------------------------------------------------PWM
+	  ReadEncoderParam.Pulse_Compare = ReadEncoderParam.MotorSetDuty * 10;
+	  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,ReadEncoderParam.Pulse_Compare);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, ReadEncoderParam.DIR);
 
   }
   /* USER CODE END 3 */
@@ -317,6 +327,51 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 83;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 999;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
 
 }
 

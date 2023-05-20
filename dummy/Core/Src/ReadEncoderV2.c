@@ -15,16 +15,26 @@ extern TIM_HandleTypeDef htim5;
 
 extern  void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 extern QEIStructureTypedef QEIData;
-extern uint64_t _micros;
-extern uint16_t PPR;
+extern ReadEncoder ReadEncoderParam;
+
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){ //get time period
 	if(htim == & htim5){
-		_micros += UINT32_MAX;
+		ReadEncoderParam._micros += UINT32_MAX;
 	}
 }
 uint64_t micros(){ //get time in micros
-	return __HAL_TIM_GET_COUNTER(&htim5)+ _micros;
+	return __HAL_TIM_GET_COUNTER(&htim5)+ ReadEncoderParam._micros;
+}
+
+void InitReadEncoder(ReadEncoder* Read, uint32_t samplingtime)
+{
+	Read->_micros = 0;
+	Read->PPR = 8192;
+	Read->samplingTime = samplingtime;
+	Read->MotorSetDuty = 0;
+	Read->Pulse_Compare = 0;
+	Read->DIR = 0;
 }
 
 void QEIEncoderPositionVelocity_Update(){
@@ -34,7 +44,7 @@ void QEIEncoderPositionVelocity_Update(){
 	QEIData.data[0] = couterPosition;
 
 	//calculation
-	QEIData.QEIPosition = couterPosition % PPR;
+	QEIData.QEIPosition = couterPosition % ReadEncoderParam.PPR;
 
 	int32_t diffPosition = QEIData.data[0] - QEIData.data[1];
 	float difftime = (QEIData.timestamp[0] - QEIData.timestamp[1]);
