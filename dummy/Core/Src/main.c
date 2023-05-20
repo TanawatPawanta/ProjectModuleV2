@@ -24,6 +24,7 @@
 #include "arm_math.h"
 #include "KalmanFilterV2.h"
 #include "ReadEncoderV2.h"
+#include "Trajectory.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,6 +51,8 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+
+//Kalman Filter
 Kalman KF;
 float32_t Var_R = 1;
 float32_t Var_Q = 100000;
@@ -59,13 +62,20 @@ arm_matrix_instance_f32 mat_P, mat_P_minus, mat_Q;
 arm_matrix_instance_f32 mat_C, mat_R, mat_S, mat_K;
 arm_matrix_instance_f32 mat_temp3x3A,mat_temp3x3B, mat_temp3x1,mat_temp1x3, mat_temp1x1;
 
+//Read Encoder
 ReadEncoder ReadEncoderParam;
 QEIStructureTypedef QEIData = {0};
+float32_t ReadPos;
 float32_t EstimateVelocity;
 float32_t ff ;
 
-
-
+//Trajectory
+Trajectory Traj;
+//46,422 pulse:680 mm
+//max velo 204,800 pulse/s
+int32_t vmax = 800;
+int32_t  amax = 1400;
+uint64_t time = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -125,7 +135,7 @@ int main(void)
 
   InitKalmanStruct(&KF,Var_Q,Var_R);
   InitReadEncoder(&ReadEncoderParam, 1000);
-  ff = 0.1;
+  SetTrajectoryConstrainAndInit(&Traj, vmax, amax);
 
   arm_mat_init_f32(&mat_A, 3, 3,KF.A);//3x3
   arm_mat_init_f32(&mat_x_hat, 3, 1, KF.x_hat);
@@ -159,11 +169,30 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  static uint64_t timestamp = 0;
+
 	  int64_t currentTime = micros();
 	  if(currentTime > timestamp)
 	  {
+		  switch(Traj.complete)
+		  {
+		  case 1:	//complete
+			  time = 0;
+			  TrajectoryGenerator(&Traj);
+			  break;
+		  case 0:	//incomplete
+			  TrajectoryEvaluator(&Traj,time);
+			  time += ReadEncoderParam.samplingTime;
+			  break;
+		  case 2:	//idle
+			  if(Traj.final_pos != Traj.start_pos)
+			  	{
+				  Traj.complete = 1;
+			  	}
+			  break;
+		  }
 		  timestamp = currentTime + ReadEncoderParam.samplingTime;
 		  QEIEncoderPositionVelocity_Update();
+		  ReadPos = __HAL_TIM_GET_COUNTER(&htim2);
 		  KF.z = QEIData.QEIVelocity;
 		  kalman_filter();
 		  EstimateVelocity = KF.x_hat[1];
