@@ -12,7 +12,7 @@ void SetTrajectoryConstrainAndInit(Trajectory* Tj, float32_t  vmax,float32_t  am
 	Tj->complete = 1;
 	Tj->v_max = vmax;
 	Tj->a_max = amax;
-	Tj->final_pos = 0;
+	Tj->final_pos = 800;
 	Tj->start_pos = 0;
 }
 

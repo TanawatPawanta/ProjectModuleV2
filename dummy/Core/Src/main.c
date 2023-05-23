@@ -54,8 +54,9 @@ UART_HandleTypeDef huart2;
 
 //Kalman Filter
 Kalman KF;
-float32_t Var_R = 1;
-float32_t Var_Q = 100000;
+float32_t Var_Q = 10;
+float32_t Var_R = 0.01;
+
 
 arm_matrix_instance_f32 mat_A, mat_x_hat, mat_x_hat_minus, mat_B, mat_u, mat_GT, mat_G,eye;
 arm_matrix_instance_f32 mat_P, mat_P_minus, mat_Q;
@@ -66,8 +67,8 @@ arm_matrix_instance_f32 mat_temp3x3A,mat_temp3x3B, mat_temp3x1,mat_temp1x3, mat_
 ReadEncoder ReadEncoderParam;
 QEIStructureTypedef QEIData = {0};
 float32_t ReadPos;
-float32_t EstimateVelocity;
-float32_t ff ;
+float32_t ZEstimateVelocity;
+
 
 //Trajectory
 Trajectory Traj;
@@ -174,6 +175,7 @@ int main(void)
 	  int64_t currentTime = micros();
 	  if(currentTime > timestamp)
 	  {
+		  timestamp = currentTime + ReadEncoderParam.samplingTime;
 		  switch(Traj.complete)
 		  {
 		  case 1:	//complete
@@ -193,13 +195,13 @@ int main(void)
 		  }
 //		  TrajectoryGenerator(&Traj);
 //		  TrajectoryEvaluator(&Traj,time);
-		  timestamp = currentTime + ReadEncoderParam.samplingTime;
+
 
 		  QEIEncoderPositionVelocity_Update();
 		  ReadPos = __HAL_TIM_GET_COUNTER(&htim2);
 		  KF.z = QEIData.QEIVelocity;
 		  kalman_filter();
-		  EstimateVelocity = KF.x_hat[1];
+		  ZEstimateVelocity = KF.x_hat[1];
 	  }
 	  //--------------------------------------------------------------------PWM
 	  ReadEncoderParam.Pulse_Compare = ReadEncoderParam.MotorSetDuty * 10;

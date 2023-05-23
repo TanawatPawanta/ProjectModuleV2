@@ -32,7 +32,7 @@ void InitReadEncoder(ReadEncoder* Read, uint32_t samplingtime)
 	Read->_micros = 0;
 	Read->PPR = 8192;
 	Read->samplingTime = samplingtime;
-	Read->MotorSetDuty = 60;
+	Read->MotorSetDuty = 0;
 	Read->Pulse_Compare = 0;
 	Read->DIR = 0;
 }

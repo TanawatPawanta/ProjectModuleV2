@@ -42,17 +42,22 @@ void InitKalmanStruct(Kalman* KF,float q,float r)
 	float32_t c[3] = {
 			0, 1, 0
 	};
-	float32_t x[3] = {
-			0, 0, 0
-	};
-	float32_t p[3] = {
-				0, 0, 0
-		};
+//	float32_t x[3] = {
+//			0, 0, 0
+//	};
+//	float32_t p[3] = {
+//				0, 0, 0
+//		};
 	float32_t g[3] = {
 			0.001 * 0.001 * 0.001 / 6,
 			0.0000005,
 			0.001
 	};
+//	float32_t g[3] = {
+//			0.0000005,
+//			0.001,
+//			0.0
+//	};
 	for(i=0;i<3;i++)
 	{
 		KF->B[i] = b[i];
