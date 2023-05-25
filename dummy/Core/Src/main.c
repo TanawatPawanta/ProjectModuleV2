@@ -51,7 +51,7 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+float32_t test;
 //Kalman Filter
 Kalman KF;
 float32_t Var_Q = 10;
@@ -170,43 +170,45 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  static uint64_t timestamp = 0;
+	  test = MAX(3.343,2.554);
 
-	  int64_t currentTime = micros();
-	  if(currentTime > timestamp)
-	  {
-		  timestamp = currentTime + ReadEncoderParam.samplingTime;
-		  switch(Traj.complete)
-		  {
-		  case 1:	//complete
-			  time = 0;
-			  TrajectoryGenerator(&Traj);
-			  break;
-		  case 0:	//incomplete
-			  TrajectoryEvaluator(&Traj,time);
-			  time += ReadEncoderParam.samplingTime*0.000001;
-			  break;
-		  case 2:	//idle
-			  if(Traj.final_pos != Traj.start_pos)
-			  	{
-				  Traj.complete = 1;
-			  	}
-			  break;
-		  }
-//		  TrajectoryGenerator(&Traj);
-//		  TrajectoryEvaluator(&Traj,time);
-
-
-		  QEIEncoderPositionVelocity_Update();
-		  ReadPos = __HAL_TIM_GET_COUNTER(&htim2);
-		  KF.z = QEIData.QEIVelocity;
-		  kalman_filter();
-		  ZEstimateVelocity = KF.x_hat[1];
-	  }
-	  //--------------------------------------------------------------------PWM
-	  ReadEncoderParam.Pulse_Compare = ReadEncoderParam.MotorSetDuty * 10;
-	  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,ReadEncoderParam.Pulse_Compare);
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, ReadEncoderParam.DIR);
+//	  static uint64_t timestamp = 0;
+//
+//	  int64_t currentTime = micros();
+//	  if(currentTime > timestamp)
+//	  {
+//		  timestamp = currentTime + ReadEncoderParam.samplingTime;
+//		  switch(Traj.complete)
+//		  {
+//		  case 1:	//complete
+//			  time = 0;
+//			  TrajectoryGenerator(&Traj);
+//			  break;
+//		  case 0:	//incomplete
+//			  TrajectoryEvaluator(&Traj,time);
+//			  time += ReadEncoderParam.samplingTime*0.000001;
+//			  break;
+//		  case 2:	//idle
+//			  if(Traj.final_pos != Traj.start_pos)
+//			  	{
+//				  Traj.complete = 1;
+//			  	}
+//			  break;
+//		  }
+////		  TrajectoryGenerator(&Traj);
+////		  TrajectoryEvaluator(&Traj,time);
+//
+//
+//		  QEIEncoderPositionVelocity_Update();
+//		  ReadPos = __HAL_TIM_GET_COUNTER(&htim2);
+//		  KF.z = QEIData.QEIVelocity;
+//		  kalman_filter();
+//		  ZEstimateVelocity = KF.x_hat[1];
+//	  }
+//	  //--------------------------------------------------------------------PWM
+//	  ReadEncoderParam.Pulse_Compare = ReadEncoderParam.MotorSetDuty * 10;
+//	  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,ReadEncoderParam.Pulse_Compare);
+//	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, ReadEncoderParam.DIR);
 
   }
   /* USER CODE END 3 */

@@ -1,4 +1,5 @@
 "./Core/Src/KalmanFilterV2.o"
+"./Core/Src/QuinticTrajectory.o"
 "./Core/Src/ReadEncoderV2.o"
 "./Core/Src/Trajectory.o"
 "./Core/Src/main.o"

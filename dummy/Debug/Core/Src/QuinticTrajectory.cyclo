@@ -1,0 +1,3 @@
+QuinticTrajectory.c:9:6:QuinticSetup	1
+QuinticTrajectory.c:14:6:QuinticGenerator	2
+QuinticTrajectory.c:25:6:QuinticEvaluator	2
