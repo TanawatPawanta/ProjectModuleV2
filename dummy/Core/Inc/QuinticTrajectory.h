@@ -10,6 +10,12 @@
 #include "main.h"
 #include "math.h"
 #include "arm_math.h"
+typedef enum
+{
+	Ready,
+	PreCal,
+	Run,
+}QuicticState;
 
 typedef struct
 {
@@ -23,10 +29,15 @@ typedef struct
 	float32_t a_max;
 	float32_t coeff[6];
 	float32_t TotalTime;
+	float32_t time;
+	float32_t timeAcc;
+	float32_t timeVelo;
+	QuicticState State;
 }QuinticTraj;
 
 void QuinticSetup(QuinticTraj* temp, float32_t vmax, float32_t amax);
 void QuinticGenerator(QuinticTraj* temp);
-void QuinticEvaluator(QuinticTraj* temp, float32_t time);
+void QuinticEvaluator(QuinticTraj* temp);
+void QuinticRun(QuinticTraj* temp,float32_t dt);
 
 #endif /* INC_QUINTICTRAJECTORY_H_ */

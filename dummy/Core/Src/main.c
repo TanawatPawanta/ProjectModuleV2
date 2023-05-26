@@ -25,6 +25,7 @@
 #include "KalmanFilterV2.h"
 #include "ReadEncoderV2.h"
 #include "Trajectory.h"
+#include "QuinticTrajectory.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,6 +78,9 @@ Trajectory Traj;
 float32_t vmax = 900;
 float32_t  amax = 1400;
 float64_t time = 0;
+
+//Quintic
+QuinticTraj QuinticVar;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -128,7 +132,7 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM5_Init();
-  MX_TIM3_Init();-
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);//Start PWM
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1|TIM_CHANNEL_2); //Start QEI
@@ -137,29 +141,7 @@ int main(void)
   InitKalmanStruct(&KF,Var_Q,Var_R);
   InitReadEncoder(&ReadEncoderParam, 1000);
   SetTrajectoryConstrainAndInit(&Traj, 900, 1400);
-
-
-  arm_mat_init_f32(&mat_A, 3, 3,KF.A);//3x3
-  arm_mat_init_f32(&mat_x_hat, 3, 1, KF.x_hat);
-  arm_mat_init_f32(&mat_x_hat_minus, 3, 1, KF.x_hat_minus);
-  arm_mat_init_f32(&mat_B, 3, 1, KF.B);
-  //arm_mat_init_f32(&mat_u, 1, 1, NULL);  // Set the input control vector if needed
-  arm_mat_init_f32(&mat_P, 3, 3, KF.P);//3x3
-  arm_mat_init_f32(&mat_P_minus, 3, 3, KF.P_minus);//3x3
-  arm_mat_init_f32(&mat_Q, 3, 3,KF.Q);//3x3
-  arm_mat_init_f32(&mat_C, 1, 3, KF.C);//1x3
-  arm_mat_init_f32(&mat_R, 1, 1, &KF.R);//1x1
-  arm_mat_init_f32(&mat_S, 1, 1, KF.S);//1x1
-  arm_mat_init_f32(&mat_K, 3, 1, KF.K);//3x1
-  arm_mat_init_f32(&mat_temp3x3A, 3, 3, KF.temp3x3A);//3x3
-  arm_mat_init_f32(&mat_temp3x3B, 3, 3, KF.temp3x3B);//3x3
-  arm_mat_init_f32(&mat_temp3x1, 3, 1, KF.temp3x1);//3x1
-  arm_mat_init_f32(&mat_temp1x3, 1, 3, KF.temp1x3);//1x3
-  arm_mat_init_f32(&mat_temp1x1, 1, 1, &KF.temp1x1);//1x1
-  arm_mat_init_f32(&mat_G, 3, 1, KF.G);//3x1
-  arm_mat_init_f32(&mat_GT, 1, 3, KF.GT);//1x3
-  arm_mat_init_f32(&eye, 3, 3, KF.I);//1x3
-
+  QuinticSetup(&QuinticVar, vmax, amax);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -170,14 +152,15 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  test = MAX(3.343,2.554);
 
-//	  static uint64_t timestamp = 0;
-//
-//	  int64_t currentTime = micros();
-//	  if(currentTime > timestamp)
-//	  {
-//		  timestamp = currentTime + ReadEncoderParam.samplingTime;
+
+	  static uint64_t timestamp = 0;
+
+	  int64_t currentTime = micros();
+	  if(currentTime > timestamp)
+	  {
+		  timestamp = currentTime + ReadEncoderParam.samplingTime;
+		  QuinticRun(&QuinticVar,0.001);
 //		  switch(Traj.complete)
 //		  {
 //		  case 1:	//complete
@@ -204,7 +187,7 @@ int main(void)
 //		  KF.z = QEIData.QEIVelocity;
 //		  kalman_filter();
 //		  ZEstimateVelocity = KF.x_hat[1];
-//	  }
+	  }
 //	  //--------------------------------------------------------------------PWM
 //	  ReadEncoderParam.Pulse_Compare = ReadEncoderParam.MotorSetDuty * 10;
 //	  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,ReadEncoderParam.Pulse_Compare);

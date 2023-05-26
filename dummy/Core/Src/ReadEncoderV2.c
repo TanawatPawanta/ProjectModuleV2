@@ -5,8 +5,9 @@
  *      Author: tanawatp
  */
 #include "ReadEncoderV2.h"
-
+#include "QuinticTrajectory.h"
 extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim5;
 
 
@@ -16,12 +17,18 @@ extern TIM_HandleTypeDef htim5;
 extern  void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 extern QEIStructureTypedef QEIData;
 extern ReadEncoder ReadEncoderParam;
+extern QuinticTraj QuinticVar;
 
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){ //get time period
-	if(htim == & htim5){
+	if(htim == & htim5)
+	{
 		ReadEncoderParam._micros += UINT32_MAX;
 	}
+//	else if(htim == &htim3)
+//	{
+//		QuinticRun(&QuinticVar,0.001);
+//	}
 }
 uint64_t micros(){ //get time in micros
 	return __HAL_TIM_GET_COUNTER(&htim5)+ ReadEncoderParam._micros;

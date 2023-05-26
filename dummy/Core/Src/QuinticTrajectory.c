@@ -10,11 +10,14 @@ void QuinticSetup(QuinticTraj* temp, float32_t vmax, float32_t amax)
 {
 	temp->v_max = vmax;
 	temp->a_max = amax;
+	temp->State = Ready;
 }
 void QuinticGenerator(QuinticTraj* temp)
 {
 	temp->displacement = temp->final_pos - temp->start_pos;
-	temp->TotalTime = MAX(0.5*sqrtf(40.0*sqrtf(3.0)*temp->displacement/(3.3*temp->a_max)),1.875*temp->displacement/temp->v_max);
+	temp->timeAcc = 0.5*sqrtf(23.094*fabs(temp->displacement)/temp->a_max);
+	temp->timeVelo = 1.875*fabs(temp->displacement)/temp->v_max;
+	temp->TotalTime = MAX(temp->timeAcc,temp->timeVelo);
 	temp->coeff[0] = temp->start_pos;
 	temp->coeff[1] = 0;
 	temp->coeff[2] = 0;
@@ -22,8 +25,9 @@ void QuinticGenerator(QuinticTraj* temp)
 	temp->coeff[4] = -15.0*temp->displacement/powf(temp->TotalTime,4);
 	temp->coeff[5] = 6.0*temp->displacement/powf(temp->TotalTime,5);
 }
-void QuinticEvaluator(QuinticTraj* temp, float32_t time)
+void QuinticEvaluator(QuinticTraj* temp)
 {
+	float32_t time = temp->time;
 	temp->current_pos = temp->coeff[0]
 						+ temp->coeff[1]*time
 						+ temp->coeff[2]*powf(time,2)
@@ -48,5 +52,36 @@ void QuinticEvaluator(QuinticTraj* temp, float32_t time)
 		temp->current_velo = 0;
 		temp->current_acc = 0;
 	}
-
 }
+void QuinticRun(QuinticTraj* temp,float32_t dt)
+{
+	switch(temp->State)
+	{
+	case Ready:
+		if(temp->start_pos != temp->final_pos)
+		{
+			temp->State = PreCal;
+		}
+		break;
+	case PreCal:
+		temp->time = 0;
+		QuinticGenerator(temp);
+		temp->State = Run;
+		break;
+	case Run:
+		temp->time = temp->time + dt;
+		QuinticEvaluator(temp);
+		if(temp->time > temp->TotalTime)
+		{
+			temp->State = Ready;
+		}
+		break;
+	}
+}
+
+
+
+
+
+
+
