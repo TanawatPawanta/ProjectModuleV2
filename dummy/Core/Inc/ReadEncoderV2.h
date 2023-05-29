@@ -12,7 +12,7 @@
 
 typedef struct QEI
 {
-	uint64_t data[2];
+	int64_t data[2];
 	uint64_t timestamp[2];
 
 	float QEIPosition;

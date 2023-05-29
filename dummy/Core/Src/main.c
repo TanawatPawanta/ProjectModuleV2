@@ -26,6 +26,7 @@
 #include "ReadEncoderV2.h"
 #include "Trajectory.h"
 #include "QuinticTrajectory.h"
+//#include "Interrupt.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,10 +54,11 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 float32_t test;
+uint64_t count=0;
 //Kalman Filter
 Kalman KF;
-float32_t Var_Q = 10;
-float32_t Var_R = 0.01;
+float32_t Var_Q = 100;
+float32_t Var_R = 0.001;
 
 
 arm_matrix_instance_f32 mat_A, mat_x_hat, mat_x_hat_minus, mat_B, mat_u, mat_GT, mat_G,eye;
@@ -77,10 +79,12 @@ Trajectory Traj;
 //max velo 204,800 pulse/s
 float32_t vmax = 900;
 float32_t  amax = 1400;
-float64_t time = 0;
+uint64_t time[2];
 
 //Quintic
 QuinticTraj QuinticVar;
+
+uint64_t Flag = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -134,14 +138,40 @@ int main(void)
   MX_TIM5_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);//Start PWM
-  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1|TIM_CHANNEL_2); //Start QEI
-  HAL_TIM_Base_Start_IT(&htim5);
 
   InitKalmanStruct(&KF,Var_Q,Var_R);
+  arm_mat_init_f32(&mat_A, 3, 3,KF.A);//3x3
+  arm_mat_init_f32(&mat_x_hat, 3, 1, KF.x_hat);
+  arm_mat_init_f32(&mat_x_hat_minus, 3, 1, KF.x_hat_minus);
+  arm_mat_init_f32(&mat_B, 3, 1, KF.B);
+  //arm_mat_init_f32(&mat_u, 1, 1, NULL);  // Set the input control vector if needed
+  arm_mat_init_f32(&mat_P, 3, 3, KF.P);//3x3
+  arm_mat_init_f32(&mat_P_minus, 3, 3, KF.P_minus);//3x3
+  arm_mat_init_f32(&mat_Q, 3, 3,KF.Q);//3x3
+  arm_mat_init_f32(&mat_C, 1, 3, KF.C);//1x3
+  arm_mat_init_f32(&mat_R, 1, 1, &KF.R);//1x1
+  arm_mat_init_f32(&mat_S, 1, 1, KF.S);//1x1
+  arm_mat_init_f32(&mat_K, 3, 1, KF.K);//3x1
+  arm_mat_init_f32(&mat_temp3x3A, 3, 3, KF.temp3x3A);//3x3
+  arm_mat_init_f32(&mat_temp3x3B, 3, 3, KF.temp3x3B);//3x3
+  arm_mat_init_f32(&mat_temp3x1, 3, 1, KF.temp3x1);//3x1
+  arm_mat_init_f32(&mat_temp1x3, 1, 3, KF.temp1x3);//1x3
+  arm_mat_init_f32(&mat_temp1x1, 1, 1, &KF.temp1x1);//1x1
+  arm_mat_init_f32(&mat_G, 3, 1, KF.G);//3x1
+  arm_mat_init_f32(&mat_GT, 1, 3, KF.GT);//1x3
+  arm_mat_init_f32(&eye, 3, 3, KF.I);//1x3
+
+
   InitReadEncoder(&ReadEncoderParam, 1000);
   SetTrajectoryConstrainAndInit(&Traj, 900, 1400);
   QuinticSetup(&QuinticVar, vmax, amax);
+
+
+  //Timers Start
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);//Start PWM
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1|TIM_CHANNEL_2); //Start QEI
+  HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_Base_Start_IT(&htim5);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -153,46 +183,11 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-
-	  static uint64_t timestamp = 0;
-
-	  int64_t currentTime = micros();
-	  if(currentTime > timestamp)
-	  {
-		  timestamp = currentTime + ReadEncoderParam.samplingTime;
-		  QuinticRun(&QuinticVar,0.001);
-//		  switch(Traj.complete)
-//		  {
-//		  case 1:	//complete
-//			  time = 0;
-//			  TrajectoryGenerator(&Traj);
-//			  break;
-//		  case 0:	//incomplete
-//			  TrajectoryEvaluator(&Traj,time);
-//			  time += ReadEncoderParam.samplingTime*0.000001;
-//			  break;
-//		  case 2:	//idle
-//			  if(Traj.final_pos != Traj.start_pos)
-//			  	{
-//				  Traj.complete = 1;
-//			  	}
-//			  break;
-//		  }
-////		  TrajectoryGenerator(&Traj);
-////		  TrajectoryEvaluator(&Traj,time);
-//
-//
-//		  QEIEncoderPositionVelocity_Update();
-//		  ReadPos = __HAL_TIM_GET_COUNTER(&htim2);
-//		  KF.z = QEIData.QEIVelocity;
-//		  kalman_filter();
-//		  ZEstimateVelocity = KF.x_hat[1];
-	  }
-//	  //--------------------------------------------------------------------PWM
-//	  ReadEncoderParam.Pulse_Compare = ReadEncoderParam.MotorSetDuty * 10;
-//	  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,ReadEncoderParam.Pulse_Compare);
-//	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, ReadEncoderParam.DIR);
-
+//	  static uint32_t timestamp = 0;
+//	  if(HAL_GetTick() >= timestamp)
+//	  {
+//		  timestamp = HAL_GetTick() + 1;
+//	  }
   }
   /* USER CODE END 3 */
 }
@@ -378,7 +373,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 83;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 999;
+  htim3.Init.Period = 199;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -500,6 +495,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -513,12 +511,59 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PB10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{ //get time period
+//	if(htim->Instance == TIM5)
+//	{
+//		ReadEncoderParam._micros += UINT32_MAX;
+//	}
+	if(htim == &htim3)// 5 KHz(0.001/5 = 0.0002)
+	{
+//		count+=1;
+//		if(count <= 52001)
+//		{
+//			QEIData.data[0] = __HAL_TIM_GET_COUNTER(&htim2);
+//			QEIData.QEIPosition = QEIData.data[0]-QEIData.data[1];
+//			QEIData.QEIVelocity = ((QEIData.QEIPosition)*60.0)/(0.0002*8192.0);
+//			KF.z = QEIData.QEIVelocity;
+//			kalman_filter();
+//			ZEstimateVelocity = KF.x_hat[1];
+//
+//			//QuinticRun(&QuinticVar,0.001);
+//			QEIData.data[1] = QEIData.data[0];
+//		}
+//		else
+//		{
+//			ReadEncoderParam.MotorSetDuty = 0;
+//		}
+		QEIData.data[0] = __HAL_TIM_GET_COUNTER(&htim2);
+		QEIData.QEIPosition = QEIData.data[0]-QEIData.data[1];
+		QEIData.QEIVelocity = ((QEIData.QEIPosition)*60.0)/(0.0002*8192.0);
+		KF.z = QEIData.QEIVelocity;
+		kalman_filter();
+		ZEstimateVelocity = KF.x_hat[1];
 
+		//QuinticRun(&QuinticVar,0.001);
+		QEIData.data[1] = QEIData.data[0];
+
+
+		ReadEncoderParam.Pulse_Compare = ReadEncoderParam.MotorSetDuty * 10;
+		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,ReadEncoderParam.Pulse_Compare);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, ReadEncoderParam.DIR);
+	}
+}
 /* USER CODE END 4 */
 
 /**

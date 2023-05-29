@@ -1,3 +1,4 @@
+"./Core/Src/Interrupt.o"
 "./Core/Src/KalmanFilterV2.o"
 "./Core/Src/QuinticTrajectory.o"
 "./Core/Src/ReadEncoderV2.o"

@@ -8,6 +8,8 @@
 #include "KalmanFilterV2.h"
 
 extern Kalman KF;
+extern TIM_HandleTypeDef htim5;
+
 
 extern arm_matrix_instance_f32 mat_A, mat_x_hat, mat_x_hat_minus, mat_B, mat_u, mat_GT, mat_G,eye;
 extern arm_matrix_instance_f32 mat_P, mat_P_minus, mat_Q;
@@ -20,8 +22,8 @@ void InitKalmanStruct(Kalman* KF,float q,float r)
 	KF->var_Q = q;
 	KF->D = 0;
 	float32_t a[9] = {
-			1, 0.001, 0.0000005,
-			0, 1, 0.001,
+			1, 0.001/5.0, 0.0000005/5.0,
+			0, 1, 0.001/5.0,
 			0, 0, 1
 	};
 	float iden[9] = {
@@ -42,22 +44,12 @@ void InitKalmanStruct(Kalman* KF,float q,float r)
 	float32_t c[3] = {
 			0, 1, 0
 	};
-//	float32_t x[3] = {
-//			0, 0, 0
-//	};
-//	float32_t p[3] = {
-//				0, 0, 0
-//		};
 	float32_t g[3] = {
-			0.001 * 0.001 * 0.001 / 6,
-			0.0000005,
-			0.001
+			0.001 * 0.001 * 0.001 / 6*5.0,
+			0.0000005/5.0,
+			0.001/5.0
 	};
-//	float32_t g[3] = {
-//			0.0000005,
-//			0.001,
-//			0.0
-//	};
+
 	for(i=0;i<3;i++)
 	{
 		KF->B[i] = b[i];
@@ -65,26 +57,7 @@ void InitKalmanStruct(Kalman* KF,float q,float r)
 		KF->G[i] = g[i];
 		KF->x_hat[i] = 0;
 	}
-	  arm_mat_init_f32(&mat_A, 3, 3,KF->A);//3x3
-	  arm_mat_init_f32(&mat_x_hat, 3, 1, KF->x_hat);
-	  arm_mat_init_f32(&mat_x_hat_minus, 3, 1, KF->x_hat_minus);
-	  arm_mat_init_f32(&mat_B, 3, 1, KF->B);
-	  //arm_mat_init_f32(&mat_u, 1, 1, NULL);  // Set the input control vector if needed
-	  arm_mat_init_f32(&mat_P, 3, 3, KF->P);//3x3
-	  arm_mat_init_f32(&mat_P_minus, 3, 3, KF->P_minus);//3x3
-	  arm_mat_init_f32(&mat_Q, 3, 3,KF->Q);//3x3
-	  arm_mat_init_f32(&mat_C, 1, 3, KF->C);//1x3
-	  arm_mat_init_f32(&mat_R, 1, 1, &KF->R);//1x1
-	  arm_mat_init_f32(&mat_S, 1, 1, KF->S);//1x1
-	  arm_mat_init_f32(&mat_K, 3, 1, KF->K);//3x1
-	  arm_mat_init_f32(&mat_temp3x3A, 3, 3, KF->temp3x3A);//3x3
-	  arm_mat_init_f32(&mat_temp3x3B, 3, 3, KF->temp3x3B);//3x3
-	  arm_mat_init_f32(&mat_temp3x1, 3, 1, KF->temp3x1);//3x1
-	  arm_mat_init_f32(&mat_temp1x3, 1, 3, KF->temp1x3);//1x3
-	  arm_mat_init_f32(&mat_temp1x1, 1, 1, &KF->temp1x1);//1x1
-	  arm_mat_init_f32(&mat_G, 3, 1, KF->G);//3x1
-	  arm_mat_init_f32(&mat_GT, 1, 3, KF->GT);//1x3
-	  arm_mat_init_f32(&eye, 3, 3, KF->I);//1x3
+
 }
 
 void kalman_filter()
