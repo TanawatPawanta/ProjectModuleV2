@@ -27,6 +27,7 @@ typedef struct
 	float32_t current_acc;
 	float32_t v_max;
 	float32_t a_max;
+	int8_t Dir;
 	float32_t coeff[6];
 	float32_t TotalTime;
 	float32_t time;

@@ -22,10 +22,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "arm_math.h"
-#include "KalmanFilterV2.h"
 #include "ReadEncoderV2.h"
-#include "Trajectory.h"
 #include "QuinticTrajectory.h"
+#include "PIDController.h"
+#include "KalmanFilterV2.h"
 //#include "Interrupt.h"
 /* USER CODE END Includes */
 
@@ -53,38 +53,32 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-float32_t test;
-uint64_t count=0;
-//Kalman Filter
-Kalman KF;
-float32_t Var_Q = 100;
-float32_t Var_R = 0.001;
-
-
-arm_matrix_instance_f32 mat_A, mat_x_hat, mat_x_hat_minus, mat_B, mat_u, mat_GT, mat_G,eye;
-arm_matrix_instance_f32 mat_P, mat_P_minus, mat_Q;
-arm_matrix_instance_f32 mat_C, mat_R, mat_S, mat_K;
-arm_matrix_instance_f32 mat_temp3x3A,mat_temp3x3B, mat_temp3x1,mat_temp1x3, mat_temp1x1;
-
 //Read Encoder
 ReadEncoder ReadEncoderParam;
 QEIStructureTypedef QEIData = {0};
 float32_t ReadPos;
+
+//Quintic Trajectory
+QuinticTraj QuinticVar;
+float32_t vmax = 100;
+float32_t  amax = 50;
+
+//PID
+PID PositionLoop;
+PID VelocityLoop;
+
+//Kalman Filter
+Kalman KF;
+float32_t Var_Q = 0.798*0.5;
+float32_t Var_R = 0.0798*0.3;
+arm_matrix_instance_f32 mat_A, mat_x_hat, mat_x_hat_minus, mat_B, mat_u,eye;
+arm_matrix_instance_f32 mat_P, mat_P_minus, mat_Q, mat_GT, mat_G;
+arm_matrix_instance_f32 mat_C, mat_R, mat_S, mat_K;
+arm_matrix_instance_f32 mat_temp3x3A,mat_temp3x3B, mat_temp3x1,mat_temp1x3, mat_temp1x1;
 float32_t ZEstimateVelocity;
 
 
-//Trajectory
-Trajectory Traj;
-//46,422 pulse:680 mm
-//max velo 204,800 pulse/s
-float32_t vmax = 900;
-float32_t  amax = 1400;
-uint64_t time[2];
 
-//Quintic
-QuinticTraj QuinticVar;
-
-uint64_t Flag = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -138,34 +132,12 @@ int main(void)
   MX_TIM5_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-
+  //Setup Initial vaules
   InitKalmanStruct(&KF,Var_Q,Var_R);
-  arm_mat_init_f32(&mat_A, 3, 3,KF.A);//3x3
-  arm_mat_init_f32(&mat_x_hat, 3, 1, KF.x_hat);
-  arm_mat_init_f32(&mat_x_hat_minus, 3, 1, KF.x_hat_minus);
-  arm_mat_init_f32(&mat_B, 3, 1, KF.B);
-  //arm_mat_init_f32(&mat_u, 1, 1, NULL);  // Set the input control vector if needed
-  arm_mat_init_f32(&mat_P, 3, 3, KF.P);//3x3
-  arm_mat_init_f32(&mat_P_minus, 3, 3, KF.P_minus);//3x3
-  arm_mat_init_f32(&mat_Q, 3, 3,KF.Q);//3x3
-  arm_mat_init_f32(&mat_C, 1, 3, KF.C);//1x3
-  arm_mat_init_f32(&mat_R, 1, 1, &KF.R);//1x1
-  arm_mat_init_f32(&mat_S, 1, 1, KF.S);//1x1
-  arm_mat_init_f32(&mat_K, 3, 1, KF.K);//3x1
-  arm_mat_init_f32(&mat_temp3x3A, 3, 3, KF.temp3x3A);//3x3
-  arm_mat_init_f32(&mat_temp3x3B, 3, 3, KF.temp3x3B);//3x3
-  arm_mat_init_f32(&mat_temp3x1, 3, 1, KF.temp3x1);//3x1
-  arm_mat_init_f32(&mat_temp1x3, 1, 3, KF.temp1x3);//1x3
-  arm_mat_init_f32(&mat_temp1x1, 1, 1, &KF.temp1x1);//1x1
-  arm_mat_init_f32(&mat_G, 3, 1, KF.G);//3x1
-  arm_mat_init_f32(&mat_GT, 1, 3, KF.GT);//1x3
-  arm_mat_init_f32(&eye, 3, 3, KF.I);//1x3
-
-
   InitReadEncoder(&ReadEncoderParam, 1000);
-  SetTrajectoryConstrainAndInit(&Traj, 900, 1400);
   QuinticSetup(&QuinticVar, vmax, amax);
-
+  PIDSetup(&PositionLoop, 2.36, 0, 0);
+  PIDSetup(&VelocityLoop, 2.36, 0, 0);
 
   //Timers Start
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);//Start PWM
@@ -214,9 +186,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 100;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
@@ -232,7 +204,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
     Error_Handler();
   }
@@ -258,9 +230,9 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 83;
+  htim1.Init.Prescaler = 0;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 999;
+  htim1.Init.Period = 4999;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -371,9 +343,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 83;
+  htim3.Init.Prescaler = 99;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 199;
+  htim3.Init.Period = 399;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -524,12 +496,8 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{ //get time period
-//	if(htim->Instance == TIM5)
-//	{
-//		ReadEncoderParam._micros += UINT32_MAX;
-//	}
-	if(htim == &htim3)// 5 KHz(0.001/5 = 0.0002)
+{
+	if(htim == &htim3)
 	{
 //		count+=1;
 //		if(count <= 52001)
@@ -550,18 +518,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //		}
 		QEIData.data[0] = __HAL_TIM_GET_COUNTER(&htim2);
 		QEIData.QEIPosition = QEIData.data[0]-QEIData.data[1];
-		QEIData.QEIVelocity = ((QEIData.QEIPosition)*60.0)/(0.0002*8192.0);
+		QEIData.QEIVelocity = QEIData.QEIPosition*2500;
 		KF.z = QEIData.QEIVelocity;
 		kalman_filter();
 		ZEstimateVelocity = KF.x_hat[1];
 
-		//QuinticRun(&QuinticVar,0.001);
+		QuinticRun(&QuinticVar,0.0004);
+		//PIDRun(&VelocityLoop, KF.x_hat[1], QuinticVar.current_velo);
 		QEIData.data[1] = QEIData.data[0];
-
-
-		ReadEncoderParam.Pulse_Compare = ReadEncoderParam.MotorSetDuty * 10;
-		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,ReadEncoderParam.Pulse_Compare);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, ReadEncoderParam.DIR);
+		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,VelocityLoop.U);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, QuinticVar.Dir);
 	}
 }
 /* USER CODE END 4 */

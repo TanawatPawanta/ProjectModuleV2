@@ -11,10 +11,19 @@ void QuinticSetup(QuinticTraj* temp, float32_t vmax, float32_t amax)
 	temp->v_max = vmax;
 	temp->a_max = amax;
 	temp->State = Ready;
+	temp->final_pos = 300;
 }
 void QuinticGenerator(QuinticTraj* temp)
 {
 	temp->displacement = temp->final_pos - temp->start_pos;
+	if(temp->displacement<0)
+	{
+		temp->Dir = 1;
+	}
+	else if (temp->displacement>0)
+	{
+		temp->Dir = 0;
+	}
 	temp->timeAcc = 0.5*sqrtf(23.094*fabs(temp->displacement)/temp->a_max);
 	temp->timeVelo = 1.875*fabs(temp->displacement)/temp->v_max;
 	temp->TotalTime = MAX(temp->timeAcc,temp->timeVelo);
@@ -51,6 +60,16 @@ void QuinticEvaluator(QuinticTraj* temp)
 		temp->current_pos = temp->start_pos;
 		temp->current_velo = 0;
 		temp->current_acc = 0;
+
+		//Test Kalman
+//		if(temp->start_pos == 0)
+//		{
+//			temp->final_pos = 300;
+//		}
+//		else if(temp->start_pos == 300)
+//		{
+//			temp->final_pos = 0;
+//		}
 	}
 }
 void QuinticRun(QuinticTraj* temp,float32_t dt)

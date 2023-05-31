@@ -5,19 +5,15 @@
  *      Author: tanawatp
  */
 #include "ReadEncoderV2.h"
+#include "arm_math.h"
 
 extern TIM_HandleTypeDef htim2;
-
 extern TIM_HandleTypeDef htim5;
 
 //extern uint8_t var;
 
 extern QEIStructureTypedef QEIData;
 extern ReadEncoder ReadEncoderParam;
-
-
-
-
 
 uint64_t micros()
 { //get time in micros

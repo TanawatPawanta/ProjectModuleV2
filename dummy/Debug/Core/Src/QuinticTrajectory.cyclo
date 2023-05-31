@@ -1,4 +1,4 @@
 QuinticTrajectory.c:9:6:QuinticSetup	1
-QuinticTrajectory.c:15:6:QuinticGenerator	2
-QuinticTrajectory.c:28:6:QuinticEvaluator	2
-QuinticTrajectory.c:56:6:QuinticRun	7
+QuinticTrajectory.c:16:6:QuinticGenerator	4
+QuinticTrajectory.c:37:6:QuinticEvaluator	2
+QuinticTrajectory.c:75:6:QuinticRun	7

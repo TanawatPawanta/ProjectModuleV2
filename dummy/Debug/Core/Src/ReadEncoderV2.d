@@ -27,7 +27,39 @@ Core/Src/ReadEncoderV2.o: ../Core/Src/ReadEncoderV2.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
- ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math_types.h \
+ ../Drivers/CMSIS/Include/cmsis_compiler.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math_memory.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/none.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math_types.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/utils.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/basic_math_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math_memory.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/none.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/utils.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/interpolation_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/bayes_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/statistics_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/basic_math_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/fast_math_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/matrix_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/complex_math_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/statistics_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/controller_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/support_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/distance_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/matrix_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/svm_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/svm_defines.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/fast_math_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/transform_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/complex_math_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/filtering_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/support_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/quaternion_math_functions.h \
+ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/window_functions.h
 ../Core/Inc/ReadEncoderV2.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -58,3 +90,35 @@ Core/Src/ReadEncoderV2.o: ../Core/Src/ReadEncoderV2.c \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math_types.h:
+../Drivers/CMSIS/Include/cmsis_compiler.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math_memory.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/none.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math_types.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/utils.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/basic_math_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math_memory.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/none.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/utils.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/interpolation_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/bayes_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/statistics_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/basic_math_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/fast_math_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/matrix_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/complex_math_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/statistics_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/controller_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/support_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/distance_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/matrix_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/svm_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/svm_defines.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/fast_math_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/transform_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/complex_math_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/filtering_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/support_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/quaternion_math_functions.h:
+C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/window_functions.h:

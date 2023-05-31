@@ -1,4 +1,4 @@
 ../Core/Src/QuinticTrajectory.c:9:6:QuinticSetup	24	static
-../Core/Src/QuinticTrajectory.c:15:6:QuinticGenerator	24	static
-../Core/Src/QuinticTrajectory.c:28:6:QuinticEvaluator	48	static
-../Core/Src/QuinticTrajectory.c:56:6:QuinticRun	16	static
+../Core/Src/QuinticTrajectory.c:16:6:QuinticGenerator	24	static
+../Core/Src/QuinticTrajectory.c:37:6:QuinticEvaluator	48	static
+../Core/Src/QuinticTrajectory.c:75:6:QuinticRun	16	static

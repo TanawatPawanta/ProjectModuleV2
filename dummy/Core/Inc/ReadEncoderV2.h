@@ -9,14 +9,15 @@
 #define INC_READENCODERV2_H_
 
 #include "main.h"
+#include "arm_math.h"
 
 typedef struct QEI
 {
 	int64_t data[2];
 	uint64_t timestamp[2];
 
-	float QEIPosition;
-	float QEIVelocity;
+	float32_t QEIPosition;
+	float32_t QEIVelocity;
 }QEIStructureTypedef;
 
 typedef struct ReadEncoderParam
