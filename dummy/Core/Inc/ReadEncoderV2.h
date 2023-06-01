@@ -13,19 +13,17 @@
 
 typedef struct QEI
 {
-	int64_t data[2];
-	uint64_t timestamp[2];
-
-	float32_t QEIPosition;
-	float32_t QEIVelocity;
+	int64_t QEIPosition_minus;
+	int64_t QEIPosition;
+	int64_t QEIVelocity;
 }QEIStructureTypedef;
 
 typedef struct ReadEncoderParam
 {
-	uint64_t _micros;
-	uint16_t PPR;
-	uint32_t samplingTime; //us => 1000 Hz
-	//PWM
+//	uint64_t _micros;
+//	uint16_t PPR;
+//	uint32_t samplingTime; //us => 1000 Hz
+//	//PWM
 	uint8_t MotorSetDuty;
 	uint16_t Pulse_Compare;
 	uint8_t DIR;
@@ -34,7 +32,7 @@ typedef struct ReadEncoderParam
 
 void InitReadEncoder(ReadEncoder* Read, uint32_t samplingtime);
 uint64_t micros();
-void QEIEncoderPositionVelocity_Update();
+//void QEIEncoderPositionVelocity_Update();
 
 
 

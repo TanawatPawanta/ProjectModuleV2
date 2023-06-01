@@ -11,10 +11,11 @@ void QuinticSetup(QuinticTraj* temp, float32_t vmax, float32_t amax)
 	temp->v_max = vmax;
 	temp->a_max = amax;
 	temp->State = Ready;
-	temp->final_pos = 300;
+	//temp->final_pos = 300;
 }
 void QuinticGenerator(QuinticTraj* temp)
 {
+	temp->final_pos = temp->final_pos * 8192/120;
 	temp->displacement = temp->final_pos - temp->start_pos;
 	if(temp->displacement<0)
 	{

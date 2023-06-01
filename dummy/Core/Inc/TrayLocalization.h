@@ -20,8 +20,6 @@ typedef struct
 	uint16_t Holes_Y[9];
 	int8_t SetTray;
 	int8_t Flag;
-
-
 	uint16_t Translation[3];
 	float32_t Rotation[9];
 	float32_t Tranformation[16];

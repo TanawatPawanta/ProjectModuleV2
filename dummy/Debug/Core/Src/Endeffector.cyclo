@@ -1,0 +1,12 @@
+Endeffector.c:24:6:CheckStatusEndEffector	1
+Endeffector.c:34:6:EndEffectorUpdate	2
+Endeffector.c:43:6:EndEffectorSoftReset	2
+Endeffector.c:53:6:EndEffectorEmergencyTrigger	3
+Endeffector.c:67:6:EndEffectorEmergencyOut	3
+Endeffector.c:81:6:EndEffectorTestModeOn	2
+Endeffector.c:91:6:EndEffectorTestModeOff	3
+Endeffector.c:105:6:EndEffectorGripperModeOn	2
+Endeffector.c:134:6:EndEffectorPickUp	2
+Endeffector.c:144:6:EndEffectorPlaceDown	3
+Endeffector.c:162:6:EndEffectorGripperModeOff	2
+Endeffector.c:172:6:Demo	11
