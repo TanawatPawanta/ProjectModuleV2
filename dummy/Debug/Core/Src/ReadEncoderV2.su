@@ -1,1 +1,2 @@
 ../Core/Src/ReadEncoderV2.c:23:6:InitReadEncoder	16	static
+../Core/Src/ReadEncoderV2.c:50:6:QEIGetFeedback	16	static

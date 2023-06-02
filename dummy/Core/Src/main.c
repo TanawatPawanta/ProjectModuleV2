@@ -55,7 +55,7 @@
 /* USER CODE BEGIN PV */
 //Read Encoder
 ReadEncoder ReadEncoderParam;
-QEIStructureTypedef QEIData ;
+QEI QEIData;
 float32_t ReadPos;
 
 //Quintic Trajectory
@@ -218,36 +218,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim == &htim4)
 	{
-//		count+=1;
-//		if(count <= 52001)
-//		{
-//			QEIData.data[0] = __HAL_TIM_GET_COUNTER(&htim2);
-//			QEIData.QEIPosition = QEIData.data[0]-QEIData.data[1];
-//			QEIData.QEIVelocity = ((QEIData.QEIPosition)*60.0)/(0.0002*8192.0);
-//			KF.z = QEIData.QEIVelocity;
-//			kalman_filter();
-//			ZEstimateVelocity = KF.x_hat[1];
-//
-//			//QuinticRun(&QuinticVar,0.001);
-//			QEIData.data[1] = QEIData.data[0];
-//		}
-//		else
-//		{
-//			ReadEncoderParam.MotorSetDuty = 0;
-//		}
-		QEIData.QEIPosition = __HAL_TIM_GET_COUNTER(&htim2);
-		QEIData.QEIVelocity = (QEIData.QEIPosition - QEIData.QEIPosition_minus)*2500;
+		QEIGetFeedback(&QEIData, 2500);
 		KF.z = QEIData.QEIVelocity;
 		kalman_filter();
 		ZEstimateVelocity = KF.x_hat[1];
-
 		QuinticRun(&QuinticVar,0.0004);
 		PIDRun(&VelocityLoop, KF.x_hat[1], QuinticVar.current_velo);
-		QEIData.QEIPosition_minus = QEIData.QEIPosition;
 		__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, QuinticVar.Dir);
-//		__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,ReadEncoderParam.MotorSetDuty*500);
-//		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, ReadEncoderParam.DIR);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
 	}
 }
 /* USER CODE END 4 */

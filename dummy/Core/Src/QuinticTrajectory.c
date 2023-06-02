@@ -61,16 +61,6 @@ void QuinticEvaluator(QuinticTraj* temp)
 		temp->current_pos = temp->start_pos;
 		temp->current_velo = 0;
 		temp->current_acc = 0;
-
-		//Test Kalman
-//		if(temp->start_pos == 0)
-//		{
-//			temp->final_pos = 300;
-//		}
-//		else if(temp->start_pos == 300)
-//		{
-//			temp->final_pos = 0;
-//		}
 	}
 }
 void QuinticRun(QuinticTraj* temp,float32_t dt)

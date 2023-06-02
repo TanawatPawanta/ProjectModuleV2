@@ -11,19 +11,15 @@
 #include "main.h"
 #include "arm_math.h"
 
-typedef struct QEI
+typedef struct
 {
-	int64_t QEIPosition_minus;
-	int64_t QEIPosition;
-	int64_t QEIVelocity;
-}QEIStructureTypedef;
+	int32_t QEIPosition_minus;
+	int32_t QEIPosition;
+	float32_t QEIVelocity;
+}QEI;
 
 typedef struct ReadEncoderParam
 {
-//	uint64_t _micros;
-//	uint16_t PPR;
-//	uint32_t samplingTime; //us => 1000 Hz
-//	//PWM
 	uint8_t MotorSetDuty;
 	uint16_t Pulse_Compare;
 	uint8_t DIR;
@@ -32,6 +28,7 @@ typedef struct ReadEncoderParam
 
 void InitReadEncoder(ReadEncoder* Read, uint32_t samplingtime);
 uint64_t micros();
+void QEIGetFeedback(QEI* temp, uint16_t Hz);
 //void QEIEncoderPositionVelocity_Update();
 
 

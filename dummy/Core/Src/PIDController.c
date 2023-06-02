@@ -23,6 +23,14 @@ void PIDSetup(PID* temp,float32_t Kp, float32_t Ki, float32_t Kd)
 void PIDRun(PID* temp, float32_t Feedback, float32_t Ref)
 {
 	temp->Error = Ref - Feedback;
+	if(temp->Error > 0)
+	{
+		temp->MotorDir = 0;
+	}
+	else if (temp->Error < 0)
+	{
+		temp->MotorDir = 1;
+	}
 	//U Update
 	temp->Delta_U = (temp->Kp + temp->Ki + temp->Kd)*temp->Error
 			  -(temp->Kp + 2*temp->Kd)*temp->Error_minus
