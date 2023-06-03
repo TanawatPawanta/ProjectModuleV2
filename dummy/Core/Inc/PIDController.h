@@ -9,6 +9,9 @@
 #define INC_PIDCONTROLLER_H_
 #include "main.h"
 #include "arm_math.h"
+#include "KalmanFilterV2.h"
+#include "ReadEncoderV2.h"
+#include "QuinticTrajectory.h"
 
 typedef struct
 {
@@ -22,11 +25,13 @@ typedef struct
 	float32_t Error_minus;
 	float32_t Error_minus2;
 	int8_t MotorDir;
+	float32_t tolerance;
 
 }PID;
 
-void PIDSetup(PID* temp,float32_t Ki, float32_t Kp, float32_t Kd);
+void PIDSetup(PID* temp,float32_t Ki, float32_t Kp, float32_t Kd,float32_t tolerance);
 void PIDRun(PID* temp, float32_t SensoRead, float32_t Ref);
+void CascadeLoop(PID* Pos, PID* Velo, float32_t PosFeedback, float32_t VeloFeedback, QuinticTraj* TrajReference, float32_t tolerance);
 void MotorWrite();
 
 #endif /* INC_PIDCONTROLLER_H_ */

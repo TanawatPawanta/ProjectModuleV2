@@ -56,7 +56,6 @@
 //Read Encoder
 ReadEncoder ReadEncoderParam;
 QEI QEIData;
-float32_t ReadPos;
 
 //Quintic Trajectory
 QuinticTraj QuinticVar;
@@ -66,6 +65,7 @@ float32_t  amax = 204800;	//1500
 //PID
 PID PositionLoop;
 PID VelocityLoop;
+
 
 //Kalman Filter
 Kalman KF;
@@ -80,8 +80,6 @@ float32_t ZEstimateVelocity;
 //Tray
 Tray PickTray;
 Tray PlaceTray;
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -134,17 +132,15 @@ int main(void)
   InitKalmanStruct(&KF,Var_Q,Var_R);
   InitReadEncoder(&ReadEncoderParam, 1000);
   QuinticSetup(&QuinticVar, vmax, amax);
-  PIDSetup(&PositionLoop, 2.36, 0, 0);
-  PIDSetup(&VelocityLoop, 2.8, 0, 0);
+  PIDSetup(&PositionLoop, 0, 0, 0, 10);
+  PIDSetup(&VelocityLoop, 5.35, 0.000392, 0, 0.00003);
   TraySetup(&PickTray, 4644, 37399, 8774, 37358);
   TraySetup(&PlaceTray, 15052, 19020, 17984, 17326);
   TrayLocalization(&PickTray);
   TrayLocalization(&PlaceTray);
   //Timers Start
   HAL_TIM_Base_Start_IT(&htim4);
-
-  //Start QEI
-  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1|TIM_CHANNEL_2);
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1|TIM_CHANNEL_2);  //Start QEI
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);//Start PWM
   HAL_TIM_Base_Start_IT(&htim5);
   /* USER CODE END 2 */
@@ -157,12 +153,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-//	  static uint32_t timestamp = 0;
-//	  if(HAL_GetTick() >= timestamp)
-//	  {
-//		  timestamp = HAL_GetTick() + 1;
-//	  }
   }
   /* USER CODE END 3 */
 }
@@ -223,7 +213,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		kalman_filter();
 		ZEstimateVelocity = KF.x_hat[1];
 		QuinticRun(&QuinticVar,0.0004);
-		PIDRun(&VelocityLoop, KF.x_hat[1], QuinticVar.current_velo);
+		CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 10);
+//		PIDRun(&PositionLoop, QEIData.QEIPosition, QuinticVar.current_pos);
+//		PIDRun(&VelocityLoop, KF.x_hat[1], QuinticVar.current_velo);
 		__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
 	}
