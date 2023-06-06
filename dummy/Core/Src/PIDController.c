@@ -45,13 +45,13 @@ void PIDRun(PID* temp, float32_t Feedback, float32_t Ref)
 
 void CascadeLoop(PID* Pos, PID* Velo, float32_t PosFeedback, float32_t VeloFeedback, QuinticTraj* TrajReference, float32_t tolerance)
 {
-//	if(fabs(TrajReference->current_pos - PosFeedback) > tolerance)
-//	{
+	if(fabs(TrajReference->current_pos - PosFeedback) > tolerance)
+	{
 		PIDRun(Pos, PosFeedback, TrajReference->current_pos);
 		float32_t veloRef = Pos->U + TrajReference->current_velo;
 		PIDRun(Velo, VeloFeedback, veloRef);
-//	}
-//	else {
-//		Velo->U = 0;
-//	}
+	}
+	else {
+		Velo->U = 0;
+	}
 }

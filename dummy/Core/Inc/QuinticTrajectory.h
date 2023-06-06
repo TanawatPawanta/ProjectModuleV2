@@ -19,14 +19,14 @@ typedef enum
 
 typedef struct
 {
-	float32_t start_pos;
-	float32_t final_pos;
-	float32_t displacement;
-	float32_t current_pos;
-	float32_t current_velo;
-	float32_t current_acc;
-	float32_t v_max;
-	float32_t a_max;
+	int32_t start_pos;
+	int32_t final_pos;
+	int32_t displacement;
+	int32_t current_pos;
+	int32_t current_velo;
+	int32_t current_acc;
+	int32_t v_max;
+	int32_t a_max;
 	int8_t Dir;
 	float32_t coeff[6];
 	float32_t TotalTime;

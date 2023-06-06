@@ -47,7 +47,7 @@ void InitKalmanStruct(Kalman* KF,float32_t q,float32_t r)
 	float32_t g[3] = {
 			0.001 * 0.001 * 0.001 / (6*2.5*2.5*2.5),
 			0.0000005/(2.5*2.5),
-			0.001/2.0
+			0.001/2.5
 	};
 
 	for(i=0;i<3;i++)

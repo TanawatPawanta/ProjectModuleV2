@@ -40,6 +40,7 @@ typedef struct KalmanFilterVariable
 	float32_t temp3x1[3 * 1];//3
 	float32_t temp1x3[3 * 1];//3
 	float32_t temp1x1;//1
+
 }Kalman;
 
 void InitKalmanStruct(Kalman* KF,float32_t q,float32_t r);

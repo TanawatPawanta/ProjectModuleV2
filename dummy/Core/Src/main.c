@@ -75,6 +75,7 @@ arm_matrix_instance_f32 mat_A, mat_x_hat, mat_x_hat_minus, mat_B, mat_u,eye;
 arm_matrix_instance_f32 mat_P, mat_P_minus, mat_Q, mat_GT, mat_G;
 arm_matrix_instance_f32 mat_C, mat_R, mat_S, mat_K;
 arm_matrix_instance_f32 mat_temp3x3A,mat_temp3x3B, mat_temp3x1,mat_temp1x3, mat_temp1x1;
+
 float32_t ZEstimateVelocity;
 
 //Tray
@@ -130,10 +131,14 @@ int main(void)
   /* USER CODE BEGIN 2 */
   //Setup Initial vaules
   InitKalmanStruct(&KF,Var_Q,Var_R);
+
   InitReadEncoder(&ReadEncoderParam, 1000);
+
   QuinticSetup(&QuinticVar, vmax, amax);
-  PIDSetup(&PositionLoop, 0, 0, 0, 10);
-  PIDSetup(&VelocityLoop, 5.35, 0.000392, 0, 0.00003);
+
+  PIDSetup(&PositionLoop, 0.0095, 1.005, 0, 10);
+  PIDSetup(&VelocityLoop, 2.3, 0.000015, 0, 0.00003);
+
   TraySetup(&PickTray, 4644, 37399, 8774, 37358);
   TraySetup(&PlaceTray, 15052, 19020, 17984, 17326);
   TrayLocalization(&PickTray);
@@ -213,7 +218,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		kalman_filter();
 		ZEstimateVelocity = KF.x_hat[1];
 		QuinticRun(&QuinticVar,0.0004);
-		CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 10);
+		CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
 //		PIDRun(&PositionLoop, QEIData.QEIPosition, QuinticVar.current_pos);
 //		PIDRun(&VelocityLoop, KF.x_hat[1], QuinticVar.current_velo);
 		__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
