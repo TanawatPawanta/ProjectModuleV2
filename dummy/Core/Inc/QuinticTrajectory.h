@@ -21,6 +21,7 @@ typedef struct
 {
 	int32_t start_pos;
 	int32_t final_pos;
+
 	int32_t displacement;
 	int32_t current_pos;
 	int32_t current_velo;
@@ -37,8 +38,8 @@ typedef struct
 }QuinticTraj;
 
 void QuinticSetup(QuinticTraj* temp, float32_t vmax, float32_t amax);
-void QuinticGenerator(QuinticTraj* temp);
+void QuinticGenerator(QuinticTraj* temp,int8_t ess);
 void QuinticEvaluator(QuinticTraj* temp);
-void QuinticRun(QuinticTraj* temp,float32_t dt);
+void QuinticRun(QuinticTraj* temp, int8_t ess, float32_t dt);
 
 #endif /* INC_QUINTICTRAJECTORY_H_ */

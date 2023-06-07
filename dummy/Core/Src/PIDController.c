@@ -33,9 +33,9 @@ void PIDRun(PID* temp, float32_t Feedback, float32_t Ref)
 		temp->MotorDir = 1;
 	}
 	//U Update
-	temp->Delta_U = (temp->Kp + temp->Ki + temp->Kd)*temp->Error
-			  -(temp->Kp + 2*temp->Kd)*temp->Error_minus
-			  +temp->Kd*temp->Error_minus2;
+	temp->Delta_U = (temp->Kp + temp->Ki + temp->Kd) * temp->Error
+			  - (temp->Kp + 2*temp->Kd) * temp->Error_minus
+			  + temp->Kd * temp->Error_minus2;
 	temp->U = temp->Delta_U + temp->U_minus;
 	temp->U_minus = temp->U;
 	//Error Update
@@ -45,13 +45,18 @@ void PIDRun(PID* temp, float32_t Feedback, float32_t Ref)
 
 void CascadeLoop(PID* Pos, PID* Velo, float32_t PosFeedback, float32_t VeloFeedback, QuinticTraj* TrajReference, float32_t tolerance)
 {
-	if(fabs(TrajReference->current_pos - PosFeedback) > tolerance)
+	if(fabs(TrajReference->current_pos - PosFeedback) == 0 )
+	{
+		Velo->U = 0;
+		Pos->ESS = TrajReference->current_pos - PosFeedback;
+	}
+	else
 	{
 		PIDRun(Pos, PosFeedback, TrajReference->current_pos);
 		float32_t veloRef = Pos->U + TrajReference->current_velo;
 		PIDRun(Velo, VeloFeedback, veloRef);
+
 	}
-	else {
-		Velo->U = 0;
-	}
+
+
 }

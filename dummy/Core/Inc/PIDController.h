@@ -26,6 +26,7 @@ typedef struct
 	float32_t Error_minus2;
 	int8_t MotorDir;
 	float32_t tolerance;
+	int8_t ESS;
 
 }PID;
 

@@ -7,10 +7,24 @@
 
 #ifndef INC_STORAGE_H_
 #define INC_STORAGE_H_
-typedef struct VariableStorage
+
+typedef struct
 {
+	uint16_t waitTime;
+	uint8_t CmpltLoop;
 
-}STORAGE;
+}OperationVar;
 
+typedef enum
+{
+	Init,
+	Homing,
+	Home_Ok,
+	SetTray,
+	PreProcess,
+//	TrajectoryCal,
+	ControlLoop,
+	Waiting,
+}OperationState;
 
 #endif /* INC_STORAGE_H_ */

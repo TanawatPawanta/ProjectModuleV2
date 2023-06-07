@@ -32,6 +32,7 @@
 #include "PIDController.h"
 #include "KalmanFilterV2.h"
 #include "TrayLocalization.h"
+#include "Storage.h"
 //#include "Interrupt.h"
 /* USER CODE END Includes */
 
@@ -53,30 +54,30 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+//Operation
+OperationState OpState = Init;
+OperationVar OpVar;
 //Read Encoder
 ReadEncoder ReadEncoderParam;
 QEI QEIData;
-
 //Quintic Trajectory
 QuinticTraj QuinticVar;
-float32_t vmax =  163840;	//80%(1200 rpm)
-float32_t  amax = 204800;	//1500
-
+float32_t vmax =  163840;	//pps  80%(1200 rpm)
+float32_t  amax = 204800;	//pps^2  1500
+int32_t dummyPickpoints[3] = {6827,7851,8875};
+int32_t dummyPlacepoints[3] = {34133,35157,36181};
 //PID
 PID PositionLoop;
 PID VelocityLoop;
-
-
 //Kalman Filter
 Kalman KF;
-float32_t Var_Q = 0.798*0.2;
-float32_t Var_R = 0.0798*0.1;
+float32_t Var_Q = 0.798*0.05;	//Measurment Noise
+float32_t Var_R = 0.0798*0.1;	//Process Noise
 arm_matrix_instance_f32 mat_A, mat_x_hat, mat_x_hat_minus, mat_B, mat_u,eye;
 arm_matrix_instance_f32 mat_P, mat_P_minus, mat_Q, mat_GT, mat_G;
 arm_matrix_instance_f32 mat_C, mat_R, mat_S, mat_K;
 arm_matrix_instance_f32 mat_temp3x3A,mat_temp3x3B, mat_temp3x1,mat_temp1x3, mat_temp1x1;
-
-float32_t ZEstimateVelocity;
+float32_t ZEstimateVelocity; //For display
 
 //Tray
 Tray PickTray;
@@ -136,8 +137,8 @@ int main(void)
 
   QuinticSetup(&QuinticVar, vmax, amax);
 
-  PIDSetup(&PositionLoop, 0.0095, 1.005, 0, 10);
-  PIDSetup(&VelocityLoop, 2.3, 0.000015, 0, 0.00003);
+  PIDSetup(&PositionLoop, 0.0095, 1.005, 0.005, 10);
+  PIDSetup(&VelocityLoop, 3.0, 0.00001, 0, 0.00003);
 
   TraySetup(&PickTray, 4644, 37399, 8774, 37358);
   TraySetup(&PlaceTray, 15052, 19020, 17984, 17326);
@@ -213,16 +214,56 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim == &htim4)
 	{
-		QEIGetFeedback(&QEIData, 2500);
-		KF.z = QEIData.QEIVelocity;
-		kalman_filter();
-		ZEstimateVelocity = KF.x_hat[1];
-		QuinticRun(&QuinticVar,0.0004);
-		CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
-//		PIDRun(&PositionLoop, QEIData.QEIPosition, QuinticVar.current_pos);
-//		PIDRun(&VelocityLoop, KF.x_hat[1], QuinticVar.current_velo);
-		__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
+		switch(OpState)
+		{
+		case Init:
+			OpState = ControlLoop;
+			break;
+		case Homing:
+			//SetHome
+			break;
+		case Home_Ok:
+			break;
+		case SetTray:
+			break;
+		case PreProcess:
+			break;
+		case ControlLoop:
+			QEIGetFeedback(&QEIData, 2500);
+			KF.z = QEIData.QEIVelocity;
+			kalman_filter();
+			ZEstimateVelocity = KF.x_hat[1];
+			QuinticRun(&QuinticVar,PositionLoop.ESS,0.0004);
+			CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
+			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
+			if(PositionLoop.Error == PositionLoop.Error_minus)
+			{
+				OpState = Waiting;
+				OpVar.waitTime = 0;
+			}
+			break;
+		case Waiting:
+			QEIGetFeedback(&QEIData, 2500);
+			KF.z = QEIData.QEIVelocity;
+			kalman_filter();
+			ZEstimateVelocity = KF.x_hat[1];
+			CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
+			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
+			if(OpVar.waitTime <= 4999)
+			{
+				OpState = ControlLoop;
+				OpVar.waitTime += 1;
+			}
+			else
+			{
+				OpState = ControlLoop;
+			}
+			break;
+		}
+
+
 	}
 }
 /* USER CODE END 4 */

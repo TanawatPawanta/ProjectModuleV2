@@ -16,12 +16,12 @@ void TraySetup(Tray* temp, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 }
 void TrayLocalization(Tray* temp)
 {
-	uint16_t RefX_case1[3] = {10*8192/120,30*8192/120,50*8192/120};
+	uint16_t RefX_case1[3] = {10,30,50};
 	uint16_t RefY_case1[3] = {40*8192/120,25*8192/120,10*8192/120};
 
-	uint16_t RefX_case2[3] = {10*8192/120,25*8192/120,40*8192/120};
+	uint16_t RefX_case2[3] = {10,25,40};
 	uint16_t RefY_case2[3] = {50*8192/120,30*8192/120,10*8192/120};
-	int16_t deltaX = temp->Edge2_X - temp->Edge1_X;
+	int16_t deltaX = (temp->Edge2_X - temp->Edge1_X)*8192/120;
 	int16_t deltaY = temp->Edge2_Y - temp->Edge1_Y;
 	float32_t lengh = sqrt(pow(deltaX,2) + pow(deltaY,2));
 
@@ -29,13 +29,13 @@ void TrayLocalization(Tray* temp)
 	{
 		temp->Flag = 1;
 	}
-	else if ((3550 <= lengh)&&(lengh <= 4233))
+	else if ((3960 <= lengh)&&(lengh <= 4233))
 	{
 		temp->Flag = 2;
 	}
 	else
 	{
-		temp->Flag = 0;
+		temp->Flag = 0;//Lenght Error!!
 	}
 	float32_t theta;
 	arm_atan2_f32(deltaY,deltaX,&theta);
