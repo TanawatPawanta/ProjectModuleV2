@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "i2c.h"
 #include "tim.h"
 #include "usart.h"
@@ -33,6 +34,8 @@
 #include "KalmanFilterV2.h"
 #include "TrayLocalization.h"
 #include "Storage.h"
+#include "JoyStick.h"
+#include "ModBusRTU.h"
 //#include "Interrupt.h"
 /* USER CODE END Includes */
 
@@ -64,8 +67,8 @@ QEI QEIData;
 QuinticTraj QuinticVar;
 float32_t vmax =  163840;	//pps  80%(1200 rpm)
 float32_t  amax = 204800;	//pps^2  1500
-int32_t dummyPickpoints[3] = {6827,7851,8875};
-int32_t dummyPlacepoints[3] = {34133,35157,36181};
+//int32_t dummyPickpoints[3] = {6827,7851,8875};
+//int32_t dummyPlacepoints[3] = {34133,35157,36181};
 //PID
 PID PositionLoop;
 PID VelocityLoop;
@@ -82,12 +85,17 @@ float32_t ZEstimateVelocity; //For display
 //Tray
 Tray PickTray;
 Tray PlaceTray;
+
+//ModBus
+ModbusHandleTypedef hmodbus;
+u16u8_t registerFrame[200];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void joyXjog();
+void joyYjog();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -111,7 +119,11 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  hmodbus.huart = &huart2;
+  hmodbus.htim = &htim11;
+  hmodbus.slaveAddress = 0x15;
+  hmodbus.RegisterSize = 200;
+  Modbus_init(&hmodbus, registerFrame);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -123,12 +135,14 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_TIM2_Init();
   MX_TIM5_Init();
   MX_TIM3_Init();
   MX_I2C1_Init();
   MX_TIM4_Init();
+  MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
   //Setup Initial vaules
   InitKalmanStruct(&KF,Var_Q,Var_R);
@@ -137,11 +151,11 @@ int main(void)
 
   QuinticSetup(&QuinticVar, vmax, amax);
 
-  PIDSetup(&PositionLoop, 0.0095, 1.005, 0.005, 10);
-  PIDSetup(&VelocityLoop, 3.0, 0.00001, 0, 0.00003);
+  PIDSetup(&PositionLoop, 15, 0, 0, 10);
+  PIDSetup(&VelocityLoop, 8.9, 0.0007, 0, 0.00003);
 
-  TraySetup(&PickTray, 4644, 37399, 8774, 37358);
-  TraySetup(&PlaceTray, 15052, 19020, 17984, 17326);
+  TraySetup(&PickTray,  67.8430, 37384,  128.3505, 37384);
+  TraySetup(&PlaceTray, 100.5948, 6840, 142.2284, 3922);
   TrayLocalization(&PickTray);
   TrayLocalization(&PlaceTray);
   //Timers Start
@@ -159,6 +173,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  Modbus_Protocal_Worker();
   }
   /* USER CODE END 3 */
 }
@@ -210,25 +225,27 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+//	if(GPIO_Pin == GPIO_PIN_11 || GPIO_Pin == GPIO_PIN_12)
+//	{
+//		OpVar.ProxStop = 1;
+//		__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
+//	}
+
+}
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim == &htim4)
 	{
-		switch(OpState)
+		static uint32_t timestamp = 0;
+		if (HAL_GetTick() >= timestamp)
 		{
-		case Init:
-			OpState = ControlLoop;
-			break;
-		case Homing:
-			//SetHome
-			break;
-		case Home_Ok:
-			break;
-		case SetTray:
-			break;
-		case PreProcess:
-			break;
-		case ControlLoop:
+		  timestamp = HAL_GetTick() + 200;
+		  registerFrame[0x00].U16 = 0b0101100101100001;
+		}
+		if(OpVar.ProxStop == 0)
+		{
 			QEIGetFeedback(&QEIData, 2500);
 			KF.z = QEIData.QEIVelocity;
 			kalman_filter();
@@ -237,34 +254,143 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
 			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
-			if(PositionLoop.Error == PositionLoop.Error_minus)
+			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,ReadEncoderParam.MotorSetDuty*500);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, ReadEncoderParam.DIR);
+			switch(OpState)
 			{
-				OpState = Waiting;
-				OpVar.waitTime = 0;
-			}
-			break;
-		case Waiting:
-			QEIGetFeedback(&QEIData, 2500);
-			KF.z = QEIData.QEIVelocity;
-			kalman_filter();
-			ZEstimateVelocity = KF.x_hat[1];
-			CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
-			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
-			if(OpVar.waitTime <= 4999)
-			{
+			case Init:
+				OpState = PreProcess;
+				break;
+			case Homing:
+
+				QEIGetFeedback(&QEIData, 2500);
+				KF.z = QEIData.QEIVelocity;
+				kalman_filter();
+				ZEstimateVelocity = KF.x_hat[1];
+				CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
+				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
+				//SetHome
+				break;
+			case Home_Ok:
+				break;
+			case SetTray:
+				break;
+			case PreProcess:
+				QuinticVar.final_pos = PickTray.Holes_Y[0];
+				OpVar.task = GoPick;	//current task.
 				OpState = ControlLoop;
-				OpVar.waitTime += 1;
+				OpVar.holeInd = 0;
+				break;
+			case ControlLoop:
+				QEIGetFeedback(&QEIData, 2500);	//Feedback from plant
+				KF.z = QEIData.QEIVelocity;
+				kalman_filter();	//Kalman Filter
+				ZEstimateVelocity = KF.x_hat[1];
+				QuinticRun(&QuinticVar,PositionLoop.ESS,0.0004);	//Trajectory
+				CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);	//Cascade Control
+				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
+	//			if((PositionLoop.Error == PositionLoop.Error_minus)&&(PositionLoop.Error_minus == PositionLoop.Error_minus2))
+	//			{
+	//				OpState = Waiting;
+	//				OpVar.waitTime = 0;
+	//			}
+				if(QuinticVar.time > QuinticVar.TotalTime)
+				{
+					OpVar.waitTime += 1;
+					if(OpVar.waitTime >= 5000)
+					{
+						OpVar.waitTime = 0;
+						switch(OpVar.task)
+						{
+						case GoPick:	//Next point should be PLACE hole
+							QuinticVar.final_pos = PlaceTray.Holes_Y[OpVar.holeInd];
+							OpVar.task = GoPlace;
+							OpState = ControlLoop;
+							break;
+						case GoPlace:	//Next point should be PICK hole
+							if(OpVar.holeInd >= 8)
+							{
+								OpState = Homing;
+							}
+							else
+							{
+								OpVar.holeInd += 1;
+								QuinticVar.final_pos = PickTray.Holes_Y[OpVar.holeInd];
+								OpVar.task = GoPick;
+								OpState = ControlLoop;
+							}
+							break;
+						}
+					}
+				}
+				break;
+			case Waiting:
+				QEIGetFeedback(&QEIData, 2500);
+				KF.z = QEIData.QEIVelocity;
+				kalman_filter();
+				ZEstimateVelocity = KF.x_hat[1];
+				CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
+				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
+				if(OpVar.waitTime <= 4999)
+				{
+					OpState = ControlLoop;
+					OpVar.waitTime += 1;
+				}
+				else
+				{
+					OpState = ControlLoop;
+				}
+				break;
 			}
-			else
+		}
+		else if (OpVar.ProxStop == 1)
+		{
+			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
+			if(OpVar.HomingKey == 1)
 			{
-				OpState = ControlLoop;
+				OpVar.ProxStop = 0;
+				OpState = Homing;
 			}
-			break;
 		}
 
-
 	}
+}
+
+void joyXjog()
+{
+
+    if (Joy.X == 1) {
+        registerFrame[0x40].U16 = 0x0008;
+    } else if (Joy.X == -1) {
+        registerFrame[0x40].U16 = 0x0004;
+    } else if (Joy.X == 0) {
+        registerFrame[0x40].U16 = 0x0000;
+    }
+
+    //set home
+    if (Joy.status == 1) {
+        registerFrame[0x40].U16 = 0x0001;
+    }
+}
+void joyYjog()
+{
+    if (Joy.Y == 1) {
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, SET);
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 20000);
+    } else if (Joy.Y == -1) {
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, RESET);
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 20000);
+    } else if (Joy.Y == 0) {
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
+    }
+
+//    if (Joy.status == 1) {
+//
+//    }
+
 }
 /* USER CODE END 4 */
 

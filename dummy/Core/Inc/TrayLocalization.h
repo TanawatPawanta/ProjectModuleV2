@@ -2,7 +2,7 @@
  * TrayLocalization.h
  *
  *  Created on: May 31, 2023
- *      Author: tanawatp
+ *      Author: tanawatp127.4
  */
 
 #ifndef INC_TRAYLOCALIZATION_H_
@@ -12,17 +12,20 @@
 #include "arm_math.h"
 typedef struct
 {
-	uint16_t Edge1_X;
+	float32_t Edge1_X;
 	uint16_t Edge1_Y;
-	uint16_t Edge2_X;
+
+	float32_t Edge2_X;
 	uint16_t Edge2_Y;
-	uint16_t Holes_X[9];
+
+	float32_t Holes_X[9];
 	uint16_t Holes_Y[9];
 	int8_t SetTray;
 	int8_t Flag;
+	float32_t angle;
 }Tray;
 
-void TraySetup(Tray* temp, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
+void TraySetup(Tray* temp, float32_t x1, uint16_t y1, float32_t x2, uint16_t y2);
 void TrayLocalization(Tray* temp);
 
 

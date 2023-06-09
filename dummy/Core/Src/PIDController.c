@@ -45,7 +45,7 @@ void PIDRun(PID* temp, float32_t Feedback, float32_t Ref)
 
 void CascadeLoop(PID* Pos, PID* Velo, float32_t PosFeedback, float32_t VeloFeedback, QuinticTraj* TrajReference, float32_t tolerance)
 {
-	if(fabs(TrajReference->current_pos - PosFeedback) == 0 )
+	if(fabs(TrajReference->current_pos - PosFeedback) <= 1 )
 	{
 		Velo->U = 0;
 		Pos->ESS = TrajReference->current_pos - PosFeedback;

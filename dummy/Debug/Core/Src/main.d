@@ -29,7 +29,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/i2c.h ../Core/Inc/main.h ../Core/Inc/tim.h \
+ ../Core/Inc/dma.h ../Core/Inc/main.h ../Core/Inc/i2c.h ../Core/Inc/tim.h \
  ../Core/Inc/usart.h ../Core/Inc/gpio.h \
  C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math.h \
  C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/arm_math_types.h \
@@ -67,7 +67,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Inc/PIDController.h ../Core/Inc/KalmanFilterV2.h \
  ../Core/Inc/ReadEncoderV2.h ../Core/Inc/QuinticTrajectory.h \
  ../Core/Inc/KalmanFilterV2.h ../Core/Inc/TrayLocalization.h \
- ../Core/Inc/Storage.h
+ ../Core/Inc/Storage.h ../Core/Inc/tim.h ../Core/Inc/JoyStick.h \
+ ../Core/Inc/ModBusRTU.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -99,8 +100,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
-../Core/Inc/i2c.h:
+../Core/Inc/dma.h:
 ../Core/Inc/main.h:
+../Core/Inc/i2c.h:
 ../Core/Inc/tim.h:
 ../Core/Inc/usart.h:
 ../Core/Inc/gpio.h:
@@ -145,3 +147,6 @@ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dumm
 ../Core/Inc/KalmanFilterV2.h:
 ../Core/Inc/TrayLocalization.h:
 ../Core/Inc/Storage.h:
+../Core/Inc/tim.h:
+../Core/Inc/JoyStick.h:
+../Core/Inc/ModBusRTU.h:

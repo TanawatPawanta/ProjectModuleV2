@@ -7,7 +7,7 @@
 #include "TrayLocalization.h"
 #include "arm_math.h"
 
-void TraySetup(Tray* temp, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
+void TraySetup(Tray* temp, float32_t x1, uint16_t y1, float32_t x2, uint16_t y2)
 {
 	temp->Edge1_X = x1;
 	temp->Edge1_Y = y1;
@@ -16,10 +16,10 @@ void TraySetup(Tray* temp, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 }
 void TrayLocalization(Tray* temp)
 {
-	uint16_t RefX_case1[3] = {10,30,50};
+	float32_t RefX_case1[3] = {10.0,30.0,50.0};
 	uint16_t RefY_case1[3] = {40*8192/120,25*8192/120,10*8192/120};
 
-	uint16_t RefX_case2[3] = {10,25,40};
+	float32_t RefX_case2[3] = {10.0,25.0,40.0};
 	uint16_t RefY_case2[3] = {50*8192/120,30*8192/120,10*8192/120};
 	int16_t deltaX = (temp->Edge2_X - temp->Edge1_X)*8192/120;
 	int16_t deltaY = temp->Edge2_Y - temp->Edge1_Y;
@@ -39,6 +39,7 @@ void TrayLocalization(Tray* temp)
 	}
 	float32_t theta;
 	arm_atan2_f32(deltaY,deltaX,&theta);
+	temp->angle = theta;
 	int8_t i;
 	int8_t j;
 	uint8_t ind = 0;
@@ -51,10 +52,10 @@ void TrayLocalization(Tray* temp)
 			{
 				temp->Holes_X[ind] = temp->Edge1_X
 								+ arm_cos_f32(theta)*RefX_case1[i]
-								- arm_sin_f32(theta)*RefY_case1[j];
+								- arm_sin_f32(theta)*RefY_case1[j]*120.0/8192.0;
 				temp->Holes_Y[ind] = temp->Edge1_Y
 								+ arm_cos_f32(theta)*RefY_case1[j]
-								+ arm_sin_f32(theta)*RefX_case1[i];
+								+ arm_sin_f32(theta)*RefX_case1[i]*8192/120;
 				ind += 1;
 			}
 		}
@@ -66,10 +67,10 @@ void TrayLocalization(Tray* temp)
 			{
 				temp->Holes_X[ind] = temp->Edge1_X
 								+ arm_cos_f32(theta)*RefX_case2[i]
-								- arm_sin_f32(theta)*RefY_case2[j];
+								- arm_sin_f32(theta)*RefY_case2[j]*120.0/8192.0;
 				temp->Holes_Y[ind] = temp->Edge1_Y
 								+ arm_cos_f32(theta)*RefY_case2[j]
-								+ arm_sin_f32(theta)*RefX_case2[i];
+								+ arm_sin_f32(theta)*RefX_case2[i]*8192/120;
 				ind += 1;
 			}
 		}
