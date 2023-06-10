@@ -151,8 +151,8 @@ int main(void)
 
   QuinticSetup(&QuinticVar, vmax, amax);
 
-  PIDSetup(&PositionLoop, 15, 0, 0, 10);
-  PIDSetup(&VelocityLoop, 8.9, 0.0007, 0, 0.00003);
+  PIDSetup(&PositionLoop, 15, 2, 0.00001, 10);
+  PIDSetup(&VelocityLoop, 5.0, 0.00000001, 0, 0.00003);
 
   TraySetup(&PickTray,  67.8430, 37384,  128.3505, 37384);
   TraySetup(&PlaceTray, 100.5948, 6840, 142.2284, 3922);
@@ -227,63 +227,133 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-//	if(GPIO_Pin == GPIO_PIN_11 || GPIO_Pin == GPIO_PIN_12)
-//	{
-//		OpVar.ProxStop = 1;
-//		__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
-//	}
+		if(GPIO_Pin == GPIO_PIN_11)
+			{
+				if(OpVar.HomingKey == 1)
+				{
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 0);
+					__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
+					__HAL_TIM_SET_COUNTER(&htim2,0);
+					__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,30*500);
+					OpVar.ProxStop = 0;
+					OpState = WaitingHome;
 
+				}
+				else if(OpVar.HomingKey == 2)
+				{
+					__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
+					OpVar.ProxStop = 1;
+				}
+			}
+		if (GPIO_Pin == GPIO_PIN_12)
+			{
+				if(OpVar.HomingKey == 1)
+				{
+					//QEIGetFeedback(&QEIData, 2500);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 1);
+					OpVar.ProxStop = 0;
+					OpState = PreHoming;
+				}
+				else if(OpVar.HomingKey == 2)
+				{
+					__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
+					OpVar.ProxStop = 1;
+				}
+			}
 }
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim == &htim4)
 	{
+		QEIGetFeedback(&QEIData, 2500);
+		KF.z = QEIData.QEIVelocity;
+		kalman_filter();
+		ZEstimateVelocity = KF.x_hat[1];
 		static uint32_t timestamp = 0;
 		if (HAL_GetTick() >= timestamp)
 		{
 		  timestamp = HAL_GetTick() + 200;
 		  registerFrame[0x00].U16 = 0b0101100101100001;
 		}
+
 		if(OpVar.ProxStop == 0)
 		{
-			QEIGetFeedback(&QEIData, 2500);
-			KF.z = QEIData.QEIVelocity;
-			kalman_filter();
-			ZEstimateVelocity = KF.x_hat[1];
-			QuinticRun(&QuinticVar,PositionLoop.ESS,0.0004);
-			CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
-			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
-			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,ReadEncoderParam.MotorSetDuty*500);
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, ReadEncoderParam.DIR);
+			//QEIGetFeedback(&QEIData, 2500);
+//			KF.z = QEIData.QEIVelocity;
+//			kalman_filter();
+//			ZEstimateVelocity = KF.x_hat[1];
+//			QuinticRun(&QuinticVar,PositionLoop.ESS,0.0004);
+//			CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
+//			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
+//			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
+//			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,ReadEncoderParam.MotorSetDuty*500);
+//			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, ReadEncoderParam.DIR);
 			switch(OpState)
 			{
 			case Init:
-				OpState = PreProcess;
+				SetHome(&OpVar);
+				break;
+			case PreHoming:
+				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
+				if(OpVar.HomeCount < 2500)
+				{
+					OpVar.HomeCount += 1;
+				}
+				else
+				{
+					QuinticVar.start_pos = __HAL_TIM_GET_COUNTER(&htim2);
+					QuinticVar.final_pos = QuinticVar.start_pos * 0.5;
+					OpVar.HomingKey = 0;
+					KF.x_hat[0] = __HAL_TIM_GET_COUNTER(&htim2);
+					OpState = Homing;
+					OpVar.HomeCount = 0;
+				}
+
 				break;
 			case Homing:
-
-				QEIGetFeedback(&QEIData, 2500);
-				KF.z = QEIData.QEIVelocity;
-				kalman_filter();
-				ZEstimateVelocity = KF.x_hat[1];
+				//QEIGetFeedback(&QEIData, 2500);
+				//QEIData.QEIVelocity = (QEIData.QEIPosition - QEIData.QEIPosition_minus)*2500;
+//				KF.z = QEIData.QEIVelocity;
+//				kalman_filter();
+				//ZEstimateVelocity = KF.x_hat[1];
+				QuinticRun(&QuinticVar,PositionLoop.ESS,0.0004);	//Trajectory
 				CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
 				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
-				//SetHome
+				if(PositionLoop.Error == 0)
+				{
+					OpState = Home_Ok;
+					OpVar.HomingKey = 2;
+					OpVar.PosOffset = QEIData.QEIPosition;
+				}
+				OpState = Homing;
 				break;
 			case Home_Ok:
+				//check if basesystem is TrayMode
+				if(registerFrame[0x01].U16 == 4){
+				}
+				else if(registerFrame[0x01].U16 == 8){
+					OpState = TrayMode;
+					OpVar.BaseMode = 0;
+				}
+				//check if basesystem is PointMode
+				else if(registerFrame[0x01].U16 == 16){
+					OpState = PointMode;
+					OpVar.BaseMode = 1;
+				}
 				break;
-			case SetTray:
+			case PointMode:
+				break;
+			case TrayMode:
 				break;
 			case PreProcess:
 				QuinticVar.final_pos = PickTray.Holes_Y[0];
 				OpVar.task = GoPick;	//current task.
-				OpState = ControlLoop;
 				OpVar.holeInd = 0;
+				OpState = ControlLoop;
 				break;
 			case ControlLoop:
-				QEIGetFeedback(&QEIData, 2500);	//Feedback from plant
+				//QEIGetFeedback(&QEIData, 2500);	//Feedback from plant
 				KF.z = QEIData.QEIVelocity;
 				kalman_filter();	//Kalman Filter
 				ZEstimateVelocity = KF.x_hat[1];
@@ -296,7 +366,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	//				OpState = Waiting;
 	//				OpVar.waitTime = 0;
 	//			}
-				if(QuinticVar.time > QuinticVar.TotalTime)
+				if(abs(PositionLoop.Error) <= 1)
 				{
 					OpVar.waitTime += 1;
 					if(OpVar.waitTime >= 5000)
@@ -326,36 +396,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 					}
 				}
 				break;
-			case Waiting:
-				QEIGetFeedback(&QEIData, 2500);
-				KF.z = QEIData.QEIVelocity;
-				kalman_filter();
-				ZEstimateVelocity = KF.x_hat[1];
-				CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
-				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
-				if(OpVar.waitTime <= 4999)
-				{
-					OpState = ControlLoop;
-					OpVar.waitTime += 1;
-				}
-				else
-				{
-					OpState = ControlLoop;
-				}
+			case WaitingHome:
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 0);
+				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,30*500);
 				break;
 			}
 		}
-		else if (OpVar.ProxStop == 1)
+		else
 		{
 			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
-			if(OpVar.HomingKey == 1)
-			{
-				OpVar.ProxStop = 0;
-				OpState = Homing;
-			}
 		}
-
 	}
 }
 

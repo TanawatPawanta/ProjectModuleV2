@@ -8,6 +8,7 @@
 #ifndef INC_PIDCONTROLLER_H_
 #define INC_PIDCONTROLLER_H_
 #include "main.h"
+#include "math.h"
 #include "arm_math.h"
 #include "KalmanFilterV2.h"
 #include "ReadEncoderV2.h"

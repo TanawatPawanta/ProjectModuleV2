@@ -25,19 +25,24 @@ typedef struct
 	uint8_t holeInd;
 	uint8_t ProxStop;
 	uint8_t HomingKey;
+	uint16_t HomeCount;
+	uint32_t PosOffset;
+	int8_t BaseMode;
 
 }OperationVar;
 
 typedef enum
 {
 	Init,
+	PreHoming,
 	Homing,
 	Home_Ok,
-	SetTray,
+	PointMode,
+	TrayMode,
 	PreProcess,
 //	TrajectoryCal,
 	ControlLoop,
-	Waiting,
+	WaitingHome,
 }OperationState;
 
 void SetHome(OperationVar* temp);

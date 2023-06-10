@@ -55,7 +55,15 @@ void CascadeLoop(PID* Pos, PID* Velo, float32_t PosFeedback, float32_t VeloFeedb
 		PIDRun(Pos, PosFeedback, TrajReference->current_pos);
 		float32_t veloRef = Pos->U + TrajReference->current_velo;
 		PIDRun(Velo, VeloFeedback, veloRef);
+	}
 
+	if(Velo->U > 40000)
+	{
+		Velo->U = 40000;
+	}
+	else if (Velo->U < -40000)
+	{
+		Velo->U = -40000;
 	}
 
 
