@@ -16,7 +16,7 @@ void QuinticSetup(QuinticTraj* temp, float32_t vmax, float32_t amax)
 void QuinticGenerator(QuinticTraj* temp,int8_t ess)
 {
 	//temp->final_pos = temp->final_pos * 8192/120;
-	temp->displacement = temp->final_pos - (temp->start_pos+ess);
+	temp->displacement = temp->final_pos - temp->start_pos;
 	if(temp->displacement<0)
 	{
 		temp->Dir = 1;
@@ -68,6 +68,7 @@ void QuinticRun(QuinticTraj* temp, int8_t ess, float32_t dt)
 	switch(temp->State)
 	{
 	case Ready:
+
 		if(temp->start_pos != temp->final_pos)
 		{
 			temp->State = PreCal;

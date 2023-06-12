@@ -116,7 +116,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+   HAL_Init();
 
   /* USER CODE BEGIN Init */
   hmodbus.huart = &huart2;
@@ -151,7 +151,7 @@ int main(void)
 
   QuinticSetup(&QuinticVar, vmax, amax);
 
-  PIDSetup(&PositionLoop, 15, 2, 0.00001, 10);
+  PIDSetup(&PositionLoop, 15, 2.5, 0.00001, 10);
   PIDSetup(&VelocityLoop, 5.0, 0.00000001, 0, 0.00003);
 
   TraySetup(&PickTray,  67.8430, 37384,  128.3505, 37384);
@@ -174,6 +174,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	Modbus_Protocal_Worker();
+	static uint32_t timestamp =0;
 	if(OpVar.ProxStop == 0)
 	{
 		switch(OpState)
@@ -189,17 +190,18 @@ int main(void)
 			case PreHoming:
 				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
 				QuinticVar.current_velo = 0;
+				OpVar.HomingKey = 0;
 				if(HAL_GetTick() >= OpVar.waitTime)
 				{
 					OpVar.waitTime = 0;
 					OpState = Homing;
 					InitKalmanStruct(&KF,Var_Q,Var_R);
-					PIDSetup(&PositionLoop, 15, 2, 0.00001, 10);
+					PIDSetup(&PositionLoop, 15, 2.2, 0.00001, 10);
 					PIDSetup(&VelocityLoop, 5.0, 0.00000001, 0, 0.00003);
+					//OpVar.HomePosOffset = __HAL_TIM_GET_COUNTER(&htim2);
 					QuinticVar.start_pos = __HAL_TIM_GET_COUNTER(&htim2);
-					QuinticVar.final_pos = __HAL_TIM_GET_COUNTER(&htim2)*0.5;
+					QuinticVar.final_pos = __HAL_TIM_GET_COUNTER(&htim2)*0.5 ;
 					OpVar.HomingKey = 0;
-
 				}
 				else
 				{
@@ -208,21 +210,45 @@ int main(void)
 			break;
 			case Homing:
 					//OpVar.ControllerEnable = 1;
-//					if(PositionLoop.IsSetPoint == 1)
-//					{
-//						OpState = Home_Ok;
-//						OpVar.HomingKey = 2;
-//						OpVar.PosOffset = QEIData.QEIPosition;
-//					}
+					if(PositionLoop.IsSteady == 1)
+					{
+						OpVar.HomingKey = 0;
+						OpVar.HomePosOffset = __HAL_TIM_GET_COUNTER(&htim2);
+						OpState = Buffer;
+						OpVar.waitTime = HAL_GetTick() + 1000;
+					}
 			break;
+			case Buffer:
+				if(HAL_GetTick() >= OpVar.waitTime)
+				{
+					if(OpVar.testDummy == 1)
+					{
+						OpState = Home_Ok;
+					}
+					else
+					{
+						OpState = PreProcess;
+					}
+				}
+				break;
 			case Home_Ok:
 				//check if basesystem is TrayMode
-				if(registerFrame[0x01].U16 == 4){
+				if(HAL_GetTick() >= timestamp)
+				{
+					timestamp = HAL_GetTick() + 10;
+					joyXjog();
+					joyYjog();
+					if(registerFrame[0x01].U16 == 4)
+					{
+
+					}
+					else if(registerFrame[0x01].U16 == 8)
+					{
+						OpState = TrayMode;
+						OpVar.BaseMode = 0;
+					}
 				}
-				else if(registerFrame[0x01].U16 == 8){
-					OpState = TrayMode;
-					OpVar.BaseMode = 0;
-				}
+
 				//check if basesystem is PointMode
 				else if(registerFrame[0x01].U16 == 16){
 					OpState = PointMode;
@@ -239,7 +265,7 @@ int main(void)
 			break;
 
 			case PreProcess:
-				QuinticVar.start_pos = 23893;
+				//QuinticVar.start_pos = 23893;
 				QuinticVar.final_pos = PickTray.Holes_Y[0];
 				OpVar.task = GoPick;	//current task.
 				OpVar.holeInd = 0;
@@ -249,51 +275,56 @@ int main(void)
 			case ControlLoop:
 				//QEIGetFeedback(&QEIData, 2500);	//Feedback from plant
 				OpVar.ControllerEnable = 1;
-		//			if((PositionLoop.Error == PositionLoop.Error_minus)&&(PositionLoop.Error_minus == PositionLoop.Error_minus2))
-		//			{
-		//				OpState = Waiting;
-		//				OpVar.waitTime = 0;
-		//			}
-				//if(PositionLoop.IsSetPoint == 1)
-//				if(QuinticVar.time >= QuinticVar.TotalTime)
-//				{
-//					OpVar.waitTime = HAL_GetTick()+2000;
-//					OpState = GripperWaiting;
-//				}
-//			break;
-//
-//			case GripperWaiting:
-//				OpVar.ControllerEnable = 1;
-//				if( HAL_GetTick() >= OpVar.waitTime)
-//				{
-//					OpVar.waitTime = 0;
-//					switch(OpVar.task)
-//					{
-//					case GoPick:	//Next point should be PLACE hole
-//						QuinticVar.final_pos = PlaceTray.Holes_Y[OpVar.holeInd];
-//						OpVar.task = GoPlace;
-//						OpState = ControlLoop;
-//					break;
-//					case GoPlace:	//Next point should be PICK hole
-//						if(OpVar.holeInd >= 8)
-//						{
-//							OpState = Homing;
-//						}
-//						else
-//						{
-//							OpVar.holeInd += 1;
-//							QuinticVar.final_pos = PickTray.Holes_Y[OpVar.holeInd];
-//							OpVar.task = GoPick;
-//							OpState = ControlLoop;
-//						}
-//					break;
-//					}
-//				}
+				OpVar.HomingKey = 2;
+				if(PositionLoop.IsSteady == 1)
+				{
+					OpVar.waitTime = HAL_GetTick() + 2000;
+					OpState = GripperWaiting;
+				}
+			break;
+
+			case GripperWaiting:
+				OpVar.ControllerEnable = 1;
+				if( HAL_GetTick() >= OpVar.waitTime)
+				{
+					OpVar.waitTime = 0;
+					switch(OpVar.task)
+					{
+					case GoPick:	//Next point should be PLACE hole
+						QuinticVar.final_pos = PlaceTray.Holes_Y[OpVar.holeInd];
+						OpVar.task = GoPlace;
+						OpState = ControlLoop;
+					break;
+					case GoPlace:	//Next point should be PICK hole
+						if(OpVar.holeInd >= 8)
+						{
+							OpState = Init;
+							OpVar.testDummy = 1;
+						}
+						else
+						{
+							OpVar.holeInd += 1;
+							QuinticVar.final_pos = PickTray.Holes_Y[OpVar.holeInd];
+							OpVar.task = GoPick;
+							OpState = ControlLoop;
+						}
+					break;
+					}
+				}
 			break;
 
 			case WaitingHome:
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 1);
-				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,35*500);
+//				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
+//				if(HAL_GetTick() >= OpVar.waitTime)
+//				{
+//					OpVar.waitTime = 0;
+//					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 0);
+//					__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,35*500);
+//				}
+//				else
+//				{
+//					__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
+//				}
 			break;
 			}
 		}
@@ -359,14 +390,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		{
 			if(OpVar.HomingKey == 1)
 			{
-				//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 0);
 				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
 				__HAL_TIM_SET_COUNTER(&htim2,0);
 				OpVar.ProxStop = 0;
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 0);
-				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,35*500);
-				//OpState = WaitingHome;
-				OpState = Homing;
+				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,30*500);
+				OpState = WaitingHome;
 			}
 			else if(OpVar.HomingKey == 2)
 			{
@@ -378,18 +407,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		{
 			if(OpVar.HomingKey == 1)
 			{
-				//QEIGetFeedback(&QEIData, 2500);
-
-				//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 1);
 				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
-//				QuinticVar.start_pos = __HAL_TIM_GET_COUNTER(&htim2);
-//				QuinticVar.final_pos = __HAL_TIM_GET_COUNTER(&htim2)*0.5;
-				OpVar.HomingKey = 0;
+				OpVar.HomingKey = 0;		//Disable Proximety Homing
 				OpVar.ProxStop = 0;
-				//OpVar.ControllerEnable = 0;
-				OpVar.waitTime = HAL_GetTick()+1000;
-				OpVar.ControllerEnable = 1;
-				QuinticVar.current_pos = __HAL_TIM_GET_COUNTER(&htim2);
+				OpVar.waitTime = HAL_GetTick() + 1000;
+				OpVar.ControllerEnable = 1;	//Enable Controller
+				QuinticVar.current_pos = __HAL_TIM_GET_COUNTER(&htim2);	//Dummy PID
 				OpState = PreHoming;
 			}
 			else if(OpVar.HomingKey == 2)
@@ -416,10 +439,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 		if(OpVar.ControllerEnable == 1)
 		{
-//			QEIGetFeedback(&QEIData, 2500);
-//			KF.z = QEIData.QEIVelocity;
-//			kalman_filter();
-//			ZEstimateVelocity = KF.x_hat[1];
 			QuinticRun(&QuinticVar,PositionLoop.ESS,0.0004);
 			CascadeLoop(&PositionLoop, &VelocityLoop, QEIData.QEIPosition, KF.x_hat[1],&QuinticVar, 3);
 			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));

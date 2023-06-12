@@ -43,17 +43,21 @@ void PIDRun(PID* temp, float32_t Feedback, float32_t Ref)
 	temp->Error_minus = temp->Error;
 }
 
-void CascadeLoop(PID* Pos, PID* Velo, float32_t PosFeedback, float32_t VeloFeedback, QuinticTraj* TrajReference, float32_t tolerance)
+void CascadeLoop(PID* Pos, PID* Velo, float32_t xPosFeedback, float32_t VeloFeedback, QuinticTraj* TrajReference, float32_t tolerance)
 {
-	if((fabs(TrajReference->current_pos - PosFeedback) <= 1 ) && (TrajReference->time >= TrajReference->TotalTime))
+	int32_t PosFeedback = __HAL_TIM_GET_COUNTER(&htim2);
+	if(TrajReference->time >= TrajReference->TotalTime)
 	{
-		Pos->IsSetPoint = 1;
-		Velo->U = 0;
-		Pos->ESS = TrajReference->current_pos - PosFeedback;
+		if((Pos->Error == Pos->Error_minus)&&(fabs(TrajReference->final_pos - __HAL_TIM_GET_COUNTER(&htim2)) <= 13))
+		{
+			Pos->IsSteady = 1;
+			Velo->U = 0;
+			Pos->ESS = TrajReference->final_pos - __HAL_TIM_GET_COUNTER(&htim2);
+		}
 	}
 	else
 	{
-		Pos->IsSetPoint = 0;
+		Pos->IsSteady = 0;
 		PIDRun(Pos, PosFeedback, TrajReference->current_pos);
 		float32_t veloRef = Pos->U + TrajReference->current_velo;
 		PIDRun(Velo, VeloFeedback, veloRef);

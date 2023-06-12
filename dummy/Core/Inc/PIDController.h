@@ -13,6 +13,7 @@
 #include "KalmanFilterV2.h"
 #include "ReadEncoderV2.h"
 #include "QuinticTrajectory.h"
+#include "tim.h"
 
 typedef struct
 {
@@ -28,7 +29,7 @@ typedef struct
 	int8_t MotorDir;
 	float32_t tolerance;
 	int8_t ESS;
-	int8_t IsSetPoint;
+	int8_t IsSteady;
 
 }PID;
 

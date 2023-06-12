@@ -26,9 +26,11 @@ typedef struct
 	uint8_t ProxStop;
 	uint8_t HomingKey;
 	uint16_t HomeCount;
-	uint32_t PosOffset;
+	uint32_t HomePosOffset;
 	int8_t BaseMode;
 	int8_t ControllerEnable;
+
+	uint8_t testDummy;
 
 }OperationVar;
 
@@ -37,6 +39,7 @@ typedef enum
 	Init,
 	PreHoming,
 	Homing,
+	Buffer,
 	Home_Ok,
 	PointMode,
 	TrayMode,
