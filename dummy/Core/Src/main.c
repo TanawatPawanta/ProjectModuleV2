@@ -180,22 +180,26 @@ int main(void)
 			{
 			case Init:
 				OpVar.ControllerEnable = 0;
-				//SetHome(&OpVar);
+				SetHome(&OpVar);
 				//OpState = PreProcess;
-				OpState = ControlLoop;
+				//OpState = ControlLoop;
 				//QuinticVar.final_pos = 23893;
 				//OpState = Homing;
 			break;
 			case PreHoming:
 				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
+				QuinticVar.current_velo = 0;
 				if(HAL_GetTick() >= OpVar.waitTime)
 				{
 					OpVar.waitTime = 0;
 					OpState = Homing;
+					InitKalmanStruct(&KF,Var_Q,Var_R);
+					PIDSetup(&PositionLoop, 15, 2, 0.00001, 10);
+					PIDSetup(&VelocityLoop, 5.0, 0.00000001, 0, 0.00003);
 					QuinticVar.start_pos = __HAL_TIM_GET_COUNTER(&htim2);
 					QuinticVar.final_pos = __HAL_TIM_GET_COUNTER(&htim2)*0.5;
 					OpVar.HomingKey = 0;
-					OpVar.ControllerEnable = 1;
+
 				}
 				else
 				{
@@ -382,8 +386,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 //				QuinticVar.final_pos = __HAL_TIM_GET_COUNTER(&htim2)*0.5;
 				OpVar.HomingKey = 0;
 				OpVar.ProxStop = 0;
-				OpVar.ControllerEnable = 0;
+				//OpVar.ControllerEnable = 0;
 				OpVar.waitTime = HAL_GetTick()+1000;
+				OpVar.ControllerEnable = 1;
+				QuinticVar.current_pos = __HAL_TIM_GET_COUNTER(&htim2);
 				OpState = PreHoming;
 			}
 			else if(OpVar.HomingKey == 2)
