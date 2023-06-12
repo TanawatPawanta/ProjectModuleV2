@@ -22,12 +22,13 @@ typedef struct
 	int32_t U;
 	int32_t Delta_U;
 	int32_t U_minus;
-	float32_t Error;
-	float32_t Error_minus;
-	float32_t Error_minus2;
+	int32_t Error;
+	int32_t Error_minus;
+	int32_t Error_minus2;
 	int8_t MotorDir;
 	float32_t tolerance;
 	int8_t ESS;
+	int8_t IsSetPoint;
 
 }PID;
 

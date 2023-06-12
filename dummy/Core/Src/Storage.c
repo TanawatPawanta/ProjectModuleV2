@@ -9,6 +9,6 @@
 void SetHome(OperationVar* temp)
 {
 	temp->HomingKey = 1;
-	__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,30*500);
+	__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,35*500);
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 1);
 }

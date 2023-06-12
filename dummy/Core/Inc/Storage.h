@@ -28,6 +28,7 @@ typedef struct
 	uint16_t HomeCount;
 	uint32_t PosOffset;
 	int8_t BaseMode;
+	int8_t ControllerEnable;
 
 }OperationVar;
 
@@ -42,6 +43,7 @@ typedef enum
 	PreProcess,
 //	TrajectoryCal,
 	ControlLoop,
+	GripperWaiting,
 	WaitingHome,
 }OperationState;
 
