@@ -11,6 +11,7 @@
 #include "math.h"
 #include "arm_math.h"
 #include "tim.h"
+#include "ModBusRTU.h"
 typedef enum
 {
 	GoPick,
@@ -29,7 +30,7 @@ typedef struct
 	uint32_t HomePosOffset;
 	int8_t BaseMode;
 	int8_t ControllerEnable;
-
+	int8_t	JoyEnable;
 	uint8_t testDummy;
 
 }OperationVar;
@@ -51,5 +52,5 @@ typedef enum
 }OperationState;
 
 void SetHome(OperationVar* temp);
-
+void RunX_Axis(int32_t XFinalPos, uint16_t velo, uint16_t accel);
 #endif /* INC_STORAGE_H_ */

@@ -1,1 +1,2 @@
-../Core/Src/Storage.c:9:6:SetHome	16	static
+../Core/Src/Storage.c:10:6:SetHome	16	static
+../Core/Src/Storage.c:17:6:RunX_Axis	16	static

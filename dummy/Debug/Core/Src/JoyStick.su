@@ -1,5 +1,2 @@
-../Core/Src/JoyStick.c:17:6:CheckJoystick	4	static
-../Core/Src/JoyStick.c:53:5:CheckButton	8	static
-../Core/Src/JoyStick.c:93:6:ResetJoystick	4	static
-../Core/Src/JoyStick.c:109:6:UpdatePosition	4	static
-../Core/Src/JoyStick.c:150:6:JoyStickRun	4	static
+../Core/Src/JoyStick.c:15:6:CheckJoystick	4	static
+../Core/Src/JoyStick.c:51:5:CheckButton	8	static

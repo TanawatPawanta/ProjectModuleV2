@@ -13,19 +13,19 @@
 typedef struct
 {
 	float32_t Edge1_X;
-	uint16_t Edge1_Y;
+	float32_t Edge1_Y;
 
 	float32_t Edge2_X;
-	uint16_t Edge2_Y;
+	float32_t Edge2_Y;
 
 	float32_t Holes_X[9];
-	uint16_t Holes_Y[9];
+	uint32_t Holes_Y[9];
 	int8_t SetTray;
 	int8_t Flag;
 	float32_t angle;
 }Tray;
 
-void TraySetup(Tray* temp, float32_t x1, uint16_t y1, float32_t x2, uint16_t y2);
+void TraySetup(Tray* temp, float32_t x1, float32_t y1, float32_t x2, float32_t y2);
 void TrayLocalization(Tray* temp);
 
 

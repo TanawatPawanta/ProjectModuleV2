@@ -21,19 +21,20 @@ struct joystick
 	int16_t B2Log;
 	int16_t B3Log;
 };
-struct position
+typedef enum
 {
-	int16_t P1[2];
-	int16_t P2[2];
-	int16_t P3[2];
-};
+	TrayP1,
+	TrayP2,
+	TrayP3,
+	TrayP4,
+}JoyState;
 
 
 extern struct joystick Joy;
 extern struct position Pick;
 extern struct position Place;
 
-extern int32_t VR[2];
+extern uint32_t VR[2];
 extern int8_t flag;
 extern int16_t counter;
 

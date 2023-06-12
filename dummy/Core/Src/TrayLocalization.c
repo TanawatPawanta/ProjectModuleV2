@@ -6,8 +6,8 @@
  */
 #include "TrayLocalization.h"
 #include "arm_math.h"
-
-void TraySetup(Tray* temp, float32_t x1, uint16_t y1, float32_t x2, uint16_t y2)
+#include  "math.h"
+void TraySetup(Tray* temp, float32_t x1, float32_t y1, float32_t x2, float32_t y2)
 {
 	temp->Edge1_X = x1;
 	temp->Edge1_Y = y1;
@@ -17,21 +17,21 @@ void TraySetup(Tray* temp, float32_t x1, uint16_t y1, float32_t x2, uint16_t y2)
 void TrayLocalization(Tray* temp)
 {
 	float32_t RefX_case1[3] = {10.0,30.0,50.0};
-	uint16_t RefY_case1[3] = {40*8192/120,25*8192/120,10*8192/120};
+	float32_t RefY_case1[3] = {40*8192.0/120.0,25*8192.0/120.0,10*8192.0/120.0};
 
 	float32_t RefX_case2[3] = {10.0,25.0,40.0};
-	uint16_t RefY_case2[3] = {50*8192/120,30*8192/120,10*8192/120};
-	int16_t deltaX = (temp->Edge2_X - temp->Edge1_X)*8192/120;
-	int16_t deltaY = temp->Edge2_Y - temp->Edge1_Y;
+	float32_t RefY_case2[3] = {50*8192.0/120.0,30*8192.0/120.0,10*8192.0/120.0};
+	float32_t deltaX = (temp->Edge2_X - temp->Edge1_X)*8192.0/120.0;
+	float32_t deltaY = temp->Edge2_Y - temp->Edge1_Y;
 	float32_t lengh = sqrt(pow(deltaX,2) + pow(deltaY,2));
 
 	if((3276 <= lengh)&&(lengh <= 3550))
 	{
-		temp->Flag = 1;
+		temp->Flag = 2; //swap case
 	}
 	else if ((3960 <= lengh)&&(lengh <= 4233))
 	{
-		temp->Flag = 2;
+		temp->Flag = 1;
 	}
 	else
 	{
@@ -51,11 +51,11 @@ void TrayLocalization(Tray* temp)
 			for(j=0;j<3;j++)
 			{
 				temp->Holes_X[ind] = temp->Edge1_X
-								+ arm_cos_f32(theta)*RefX_case1[i]
-								- arm_sin_f32(theta)*RefY_case1[j]*120.0/8192.0;
+								+ (cos(theta)*RefX_case1[i])
+								- (sin(theta)*RefY_case1[j]*120.0/8192.0);
 				temp->Holes_Y[ind] = temp->Edge1_Y
-								+ arm_cos_f32(theta)*RefY_case1[j]
-								+ arm_sin_f32(theta)*RefX_case1[i]*8192/120;
+								+ (cos(theta)*RefY_case1[j])
+								+ (sin(theta)*RefX_case1[i]*8192.0/120.0);
 				ind += 1;
 			}
 		}
@@ -66,11 +66,11 @@ void TrayLocalization(Tray* temp)
 			for(j=0;j<3;j++)
 			{
 				temp->Holes_X[ind] = temp->Edge1_X
-								+ arm_cos_f32(theta)*RefX_case2[i]
-								- arm_sin_f32(theta)*RefY_case2[j]*120.0/8192.0;
+								+ (cos(theta)*RefX_case2[i])
+								- (sin(theta)*RefY_case2[j]*120.0/8192.0);
 				temp->Holes_Y[ind] = temp->Edge1_Y
-								+ arm_cos_f32(theta)*RefY_case2[j]
-								+ arm_sin_f32(theta)*RefX_case2[i]*8192/120;
+								+ (cos(theta)*RefY_case2[j])
+								+ (sin(theta)*RefX_case2[i]*8192.0/120.0);
 				ind += 1;
 			}
 		}

@@ -1,206 +1,261 @@
 /*
  * Endeffector.c
  *
- *  Created on: May 18, 2023
- *      Author: napat
+ *  Created on: Jun 12, 2023
+ *      Author: panna
  */
 #include "Endeffector.h"
 #include "i2c.h"
-#include "arm_math.h"
-#include "main.h"
-// Read Current Status
-uint8_t EndEffectorData;
 
-// Check status end effector
-uint8_t checkError;
-uint8_t checkEmergency;
-uint8_t checkTestMode;
-uint8_t checkRunMode;
-uint8_t checkGripperStatus;
+uint8_t Stamp = 0;
+uint16_t i = 0;
+EndEffMode TestState;
+uint8_t ReadData;
 
-// return check flag
-uint8_t returnStatus;
-uint8_t mode;
-void CheckStatusEndEffector(){
-//	EndEffectorData
-	checkError = (EndEffectorData >> 5) & 0b00000111;
-	checkEmergency  = (EndEffectorData >> 4) & 0b00000001;
-	checkTestMode = (EndEffectorData >> 3) & 0b00000001;
-	checkRunMode = (EndEffectorData >> 2) & 0b00000001;
-	checkGripperStatus = EndEffectorData & 0b00000011;
+uint16_t count = 0;
+
+uint8_t Error_Status;
+uint8_t Emergency_Status;
+uint8_t TestMode_Status;
+uint8_t RunMode_Status;
+uint8_t GripperMode_Status;
+
+void Endeffector_Update_Status(){
+	Error_Status = (ReadData >> 5) & 0b00000111;
+	Emergency_Status = (ReadData >> 4) & 0b00000001;
+	TestMode_Status = (ReadData >> 3) & 0b00000001;
+	RunMode_Status = (ReadData >> 2) & 0b00000001;
+	GripperMode_Status = ReadData & 0b00000011;
 }
 
-// read status from end effector
-void EndEffectorUpdate(){
-	if(hi2c1.State == HAL_I2C_STATE_READY){
-		HAL_I2C_Master_Receive(&hi2c1, SlaveAddress, &EndEffectorData, 1, HAL_MAX_DELAY);
+void Endeffector_Read_Status(){
+	if(Stamp == 1 && hi2c1.State == HAL_I2C_STATE_READY){
+		HAL_I2C_Master_Receive_IT(&hi2c1, SlaveAddr, &ReadData, sizeof(ReadData));
+		count++;
 	}
-    HAL_Delay(100);
-	CheckStatusEndEffector();
-}
 
-// write
-void EndEffectorSoftReset(){
-	static uint8_t SoftReset[4] = {SortReset_seq1, SortReset_seq2, SortReset_seq3, SortReset_seq4};
-//	EndEffectorUpdate();
-	if(hi2c1.State == HAL_I2C_STATE_READY){
-		HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, SoftReset, 4, HAL_MAX_DELAY);
-	}
-    HAL_Delay(100);
-	EndEffectorUpdate();
-}
-
-void EndEffectorEmergencyTrigger(){
-	static uint8_t EmergencyTrigger[1] = {Emergency_Trigger};
-	if(hi2c1.State == HAL_I2C_STATE_READY){
-		HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, EmergencyTrigger, 1, HAL_MAX_DELAY);
-	}
-    HAL_Delay(10);
-	EndEffectorUpdate();
-
-	// if emergency still off
-	if(checkEmergency == 0){
-		EndEffectorSoftReset();
-	}
-}
-
-void EndEffectorEmergencyOut(){
-	static uint8_t EmergencyOut[4] = {OutEmergency_seq1, OutEmergency_seq2, OutEmergency_seq3, OutEmergency_seq4};
-	if(hi2c1.State == HAL_I2C_STATE_READY){
-		HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, EmergencyOut, 4, HAL_MAX_DELAY);
-	}
-    HAL_Delay(10);
-	EndEffectorUpdate();
-
-	// if emergency still on
-	if(checkEmergency == 1){
-		EndEffectorSoftReset();
-	}
-}
-
-void EndEffectorTestModeOn(){
-	static uint8_t TestModeOn[2] = {0x01, 0x11};
-	if(hi2c1.State == HAL_I2C_STATE_READY){
-//	HAL_Delay(100);
-		HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, TestModeOn, 2, HAL_MAX_DELAY);
-	}
-    HAL_Delay(10);
-	EndEffectorUpdate();
-}
-
-void EndEffectorTestModeOff(){
-	static uint8_t TestModeOff[2] = {TestMode_Command, TestMode_Close};
-	if(hi2c1.State == HAL_I2C_STATE_READY){
-		HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, TestModeOff, 2, HAL_MAX_DELAY);
-	}
-    HAL_Delay(10);
-	EndEffectorUpdate();
-
-	// if test mode still on
-	if(checkTestMode == 1){
-		EndEffectorSoftReset();
-	}
-}
-
-void EndEffectorGripperModeOn(){
-	static uint8_t GripperOn[] = {RunMode_Command, RunMode_On};
-	if(hi2c1.State == HAL_I2C_STATE_READY){
-		HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, GripperOn, 2, HAL_MAX_DELAY);
-	}
-    HAL_Delay(10);
-	EndEffectorUpdate();
-}
-
-// return 1 picked, return 0 not pick
-//int EndEffectorPickUp(){
-//	EndEffectorTestModeOn();
-//	static uint8_t PickUp[] = {RunMode_Command, Gripper_PickUp};
-//	EndEffectorUpdate();
-////    HAL_Delay(100);
-//	if(checkGripperStatus == 0b00){ // if gripper status = not pick
-//		while(checkGripperStatus != 0b11){ // if gripper status = picked
-//			HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, PickUp, 2, HAL_MAX_DELAY);
-////		    HAL_Delay(100);
-//			EndEffectorUpdate();
-////		    HAL_Delay(100);
-//		}
-//		returnStatus = 1;
-//		return returnStatus;
-//	}
-//	returnStatus = 0;
-//	return returnStatus;
-//}
-
-void EndEffectorPickUp(){
-	static uint8_t PickUp[] = {RunMode_Command, Gripper_PickUp};
-	if(hi2c1.State == HAL_I2C_STATE_READY){
-		HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, PickUp, 2, HAL_MAX_DELAY);
-	}
-    HAL_Delay(10);
-	EndEffectorUpdate();
-}
-
-
-void EndEffectorPlaceDown(){
-//	EndEffectorTestModeOn();
-	static uint8_t PlaceDown[] = {RunMode_Command, Gripper_PlaceDown};
-	EndEffectorUpdate();
-    HAL_Delay(10);
-	if(checkGripperStatus == 0b11){ // if gripper status = picked
-		while(checkGripperStatus != 0b00){ // if gripper status = not pick (done pick & place)
-			HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, PlaceDown, 2, HAL_MAX_DELAY);
-		    HAL_Delay(10);
-			EndEffectorUpdate();
-		    HAL_Delay(10);
+	static uint32_t timestamp = 0;
+	while(i < 150){
+		if(HAL_GetTick() >= timestamp){
+			timestamp = HAL_GetTick() + 10;
+			i++;
 		}
 	}
-//	static uint8_t PlaceDown[] = {RunMode_Command, Gripper_PlaceDown};
-//	HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, PlaceDown, 2, HAL_MAX_DELAY);
-//	EndEffectorUpdate();
+
+	Endeffector_Update_Status();
+	Stamp = 0;
+	i = 0;
 }
 
-void EndEffectorGripperModeOff(){
-	static uint8_t GripperOff[] = {RunMode_Command, RunMode_Off};
-	if(hi2c1.State == HAL_I2C_STATE_READY){
-		HAL_I2C_Master_Transmit(&hi2c1, SlaveAddress, GripperOff, 2, HAL_MAX_DELAY);
+void Endeffector_SoftReset(){
+	static uint8_t CommandSeq[4] = {SoftReset_Seq1, SoftReset_Seq2, SoftReset_Seq3, SoftReset_Seq4};
+
+	if(Stamp == 1 && hi2c1.State == HAL_I2C_STATE_READY){
+		HAL_I2C_Master_Transmit_IT(&hi2c1, SlaveAddr, CommandSeq, sizeof(CommandSeq));
 	}
-	HAL_Delay(10);
-	EndEffectorUpdate();
+
+	static uint32_t timestamp = 0;
+	while(i < 150){
+		if(HAL_GetTick() >= timestamp){
+			timestamp = HAL_GetTick() + 10;
+			i++;
+		}
+	}
+	Endeffector_Read_Status();
+	Stamp = 0;
+	i = 0;
 }
 
+void Endeffector_EmergencyTrigger(){
+	static uint8_t EmergencyCommand[1] = {EmergencyTrigger};
 
-void Demo(){
-	switch(mode){
-	case 0:
-		EndEffectorUpdate();
+	if(Stamp == 1 && hi2c1.State == HAL_I2C_STATE_READY){
+		HAL_I2C_Master_Transmit_IT(&hi2c1, SlaveAddr, EmergencyCommand, sizeof(EmergencyCommand));
+	}
+
+	static uint32_t timestamp = 0;
+	while(i < 150){
+		if(HAL_GetTick() >= timestamp){
+			timestamp = HAL_GetTick() + 10;
+			i++;
+		}
+	}
+
+	Endeffector_Read_Status();
+	Stamp = 0;
+	i = 0;
+}
+
+void Endeffector_EmergencyExit(){
+	static uint8_t EmergencySeq[4] = {EmergencyOut_Seq1, EmergencyOut_Seq2, EmergencyOut_Seq3, EmergencyOut_Seq4};
+
+	if(Stamp == 1 && hi2c1.State == HAL_I2C_STATE_READY){
+		HAL_I2C_Master_Transmit_IT(&hi2c1, SlaveAddr, EmergencySeq, sizeof(EmergencySeq));
+	}
+
+	static uint32_t timestamp = 0;
+	while(i < 150){
+		if(HAL_GetTick() >= timestamp){
+			timestamp = HAL_GetTick() + 10;
+			i++;
+		}
+	}
+
+	Endeffector_Read_Status();
+	Stamp = 0;
+	i = 0;
+}
+
+void Endeffector_TestModeOn(){
+	static uint8_t TestModeON[2] = {TestMode_Command, TestMode_On};
+
+	if(Stamp == 1 && hi2c1.State == HAL_I2C_STATE_READY){
+		HAL_I2C_Master_Transmit_IT(&hi2c1, SlaveAddr, TestModeON, sizeof(TestModeON));
+	}
+
+	static uint32_t timestamp = 0;
+	while(i < 150){
+		if(HAL_GetTick() >= timestamp){
+			timestamp = HAL_GetTick() + 10;
+			i++;
+		}
+	}
+
+	Endeffector_Read_Status();
+	Stamp = 0;
+	i = 0;
+}
+
+void Endeffector_TestModeOff(){
+	static uint8_t TestModeOff[2] = {TestMode_Command, TestMode_Off};
+
+	if(Stamp == 1 && hi2c1.State == HAL_I2C_STATE_READY){
+		HAL_I2C_Master_Transmit_IT(&hi2c1, SlaveAddr, TestModeOff, sizeof(TestModeOff));
+	}
+
+	static uint32_t timestamp = 0;
+	while(i < 150){
+		if(HAL_GetTick() >= timestamp){
+			timestamp = HAL_GetTick() + 10;
+			i++;
+		}
+	}
+
+	Endeffector_Read_Status();
+	Stamp = 0;
+	i = 0;
+}
+
+void Endeffector_GripperModeOn(){
+	static uint8_t GripperOn[2] = {GripperMode_Command, GripperMode_On};
+
+	if(Stamp == 1 && hi2c1.State == HAL_I2C_STATE_READY){
+		HAL_I2C_Master_Transmit_IT(&hi2c1, SlaveAddr, GripperOn, sizeof(GripperOn));
+	}
+
+	static uint32_t timestamp = 0;
+	while(i < 150){
+		if(HAL_GetTick() >= timestamp){
+			timestamp = HAL_GetTick() + 10;
+			i++;
+		}
+	}
+
+	Endeffector_Read_Status();
+	Stamp = 0;
+	i = 0;
+}
+
+void Endeffector_GripperModeOff(){
+	static uint8_t GripperOff[2] = {GripperMode_Command, GripperMode_Off};
+
+	if(Stamp == 1 && hi2c1.State == HAL_I2C_STATE_READY){
+		HAL_I2C_Master_Transmit_IT(&hi2c1, SlaveAddr, GripperOff, sizeof(GripperOff));
+	}
+
+	static uint32_t timestamp = 0;
+	while(i < 150){
+		if(HAL_GetTick() >= timestamp){
+			timestamp = HAL_GetTick() + 10;
+			i++;
+		}
+	}
+
+	Endeffector_Read_Status();
+	Stamp = 0;
+	i = 0;
+}
+
+void Endeffector_PickUp(){
+	static uint8_t PickUp[2] = {GripperMode_Command, GripperMode_PickUp};
+
+	if(Stamp == 1 && hi2c1.State == HAL_I2C_STATE_READY){
+		HAL_I2C_Master_Transmit_IT(&hi2c1, SlaveAddr, PickUp, sizeof(PickUp));
+	}
+
+	static uint32_t timestamp = 0;
+	while(i < 150){
+		if(HAL_GetTick() >= timestamp){
+			timestamp = HAL_GetTick() + 10;
+			i++;
+		}
+	}
+
+	Endeffector_Read_Status();
+	Stamp = 0;
+	i = 0;
+}
+
+void Endeffector_PlaceDown(){
+	static uint8_t PlaceDown[2] = {GripperMode_Command, GripperMode_PlaceDown};
+
+	if(Stamp == 1 && hi2c1.State == HAL_I2C_STATE_READY){
+		HAL_I2C_Master_Transmit_IT(&hi2c1, SlaveAddr, PlaceDown, sizeof(PlaceDown));
+	}
+
+	static uint32_t timestamp = 0;
+	while(i < 150){
+		if(HAL_GetTick() >= timestamp){
+			timestamp = HAL_GetTick() + 10;
+			i++;
+		}
+	}
+	Endeffector_Read_Status();
+	Stamp = 0;
+	i = 0;
+}
+
+void TestMode(){
+	switch(TestState){
+	case Read_Status:
+		Endeffector_Read_Status();
 		break;
-	case 1:
-		EndEffectorSoftReset();
+	case SoftReset:
+		Endeffector_SoftReset();
 		break;
-	case 2:
-		EndEffectorEmergencyTrigger();
+	case TestModeOn:
+		Endeffector_TestModeOn();
 		break;
-	case 3:
-		EndEffectorEmergencyOut();
+	case TestModeOff:
+		Endeffector_TestModeOff();
 		break;
-	case 4:
-		EndEffectorTestModeOn();
+	case GripperModeOn:
+		Endeffector_GripperModeOn();
 		break;
-	case 5:
-		EndEffectorTestModeOff();
+	case PickUp:
+		Endeffector_PickUp();
 		break;
-	case 6:
-		EndEffectorGripperModeOn();
+	case PlaceDown:
+		Endeffector_PlaceDown();
 		break;
-	case 7:
-		EndEffectorPickUp();
+	case GripperModeOff:
+		Endeffector_GripperModeOff();
 		break;
-	case 8:
-		EndEffectorPlaceDown();
+	case GripperEmerTrigger:
+		Endeffector_EmergencyTrigger();
 		break;
-	case 9:
-		EndEffectorGripperModeOff();
+	case GripperEmerExit:
+		Endeffector_EmergencyExit();
 		break;
 	}
 }
-

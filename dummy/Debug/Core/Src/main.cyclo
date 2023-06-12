@@ -1,7 +1,9 @@
-main.c:110:5:main	24
-main.c:344:6:SystemClock_Config	3
-main.c:387:6:HAL_GPIO_EXTI_Callback	7
-main.c:425:6:HAL_TIM_PeriodElapsedCallback	4
-main.c:449:6:joyXjog	5
-main.c:465:6:joyYjog	4
-main.c:488:6:Error_Handler	1
+main.c:118:5:main	35
+main.c:406:6:SystemClock_Config	3
+main.c:449:6:HAL_GPIO_EXTI_Callback	7
+main.c:488:6:HAL_TIM_PeriodElapsedCallback	4
+main.c:515:6:joyXjog	5
+main.c:531:6:joyYjog	4
+main.c:548:6:CollectPosition	16
+main.c:601:9:Uint2Int	2
+main.c:621:6:Error_Handler	1

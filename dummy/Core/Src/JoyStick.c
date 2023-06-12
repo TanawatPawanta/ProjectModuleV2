@@ -7,10 +7,8 @@
 #include "joystick.h"
 
 struct joystick Joy = {0};
-struct position Pick;
-struct position Place;
 
-int32_t VR[2] = {0};
+uint32_t VR[2] = {0};
 int8_t flag = 0;
 int16_t counter = 0;
 
@@ -79,75 +77,12 @@ int CheckButton()
 		else if(Joy.B2Log == 1 && HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0)){
 			Joy.status = 0;
 			Joy.B2Log = 0;
-			UpdatePosition();
 		}
 		else if(Joy.B3Log == 1 && HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_2)){
 			Joy.status = 0;
 			Joy.B3Log = 0;
-			ResetJoystick();
 		}
 
 	return Joy.status;
 }
 
-void ResetJoystick()
-{
-	Place.P1[0] = 0;
-	Place.P1[1] = 0;
-	Place.P2[0] = 0;
-	Place.P2[1] = 0;
-	Place.P3[0] = 0;
-	Place.P3[1] = 0;
-	Pick.P1[0] = 0;
-	Pick.P1[1] = 0;
-	Pick.P2[0] = 0;
-	Pick.P2[1] = 0;
-	Pick.P3[0] = 0;
-	Pick.P3[1] = 0;
-}
-
-void UpdatePosition()
-{
-	// index 0 -> From PLC
-//	// index 1 -> From encoder
-	flag = flag + 1;
-	switch (flag) {
-//		// Pick (1)
-		case 1:
-			counter = 1;
-////			Pick.P1[0] =
-////			Pick.P1[1] =
-			break;
-		case 2:
-			counter = 2;
-////			Pick.P2[0] =
-////			Pick.P2[1] =
-			break;
-		case 3:
-			counter = 3;
-////			Pick.P3[0] =
-////			Pick.P3[1] =
-			break;
-		case 4:
-			counter = 4;
-////			Place.P4[0] =
-////			Place.P4[1] =
-			break;
-		case 5:
-			counter = 5;
-////			Place.P5[0] =
-////			Place.P5[1] =
-			break;
-		case 6:
-			counter = 6;
-			flag = 0;
-////			Place.P6[0] =
-////			Place.P6[1] =
-			break;
-	}
-}
-
-void JoyStickRun()
-{
-
-}

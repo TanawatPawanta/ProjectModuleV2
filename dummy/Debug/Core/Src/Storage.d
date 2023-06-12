@@ -19,6 +19,9 @@ Core/Src/Storage.o: ../Core/Src/Storage.c ../Core/Inc/Storage.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_cortex.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_adc.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h \
@@ -61,7 +64,7 @@ Core/Src/Storage.o: ../Core/Src/Storage.c ../Core/Inc/Storage.h \
  C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/support_functions.h \
  C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/quaternion_math_functions.h \
  C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/window_functions.h \
- ../Core/Inc/tim.h
+ ../Core/Inc/tim.h ../Core/Inc/ModBusRTU.h
 ../Core/Inc/Storage.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -84,6 +87,9 @@ Core/Src/Storage.o: ../Core/Src/Storage.c ../Core/Inc/Storage.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_cortex.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_adc.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_adc_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ex.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h:
@@ -127,3 +133,4 @@ C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dumm
 C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/quaternion_math_functions.h:
 C:/Users/tanawatp/Desktop/65_02/FRA262_ProjectModule/Github/ProjectModuleV2/dummy/DSP/Include/dsp/window_functions.h:
 ../Core/Inc/tim.h:
+../Core/Inc/ModBusRTU.h:
