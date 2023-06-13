@@ -49,7 +49,7 @@ void CascadeLoop(PID* Pos, PID* Velo, float32_t xPosFeedback, float32_t VeloFeed
 	if(TrajReference->time >= TrajReference->TotalTime)
 	{
 		//int32_t CurrentError = TrajReference->current_pos - PosFeedback;
-		if((Pos->Error == Pos->Error_minus)&&(fabs(TrajReference->final_pos - __HAL_TIM_GET_COUNTER(&htim2)) <= 13))
+		if((TrajReference->final_pos - __HAL_TIM_GET_COUNTER(&htim2) <= 13) || (TrajReference->final_pos - __HAL_TIM_GET_COUNTER(&htim2) >= -13))
 		{
 				Pos->IsSteady = 1;
 				Velo->U = 0;

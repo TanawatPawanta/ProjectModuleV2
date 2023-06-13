@@ -1,2 +1,2 @@
-../Core/Src/TrayLocalization.c:10:6:TraySetup	32	static
-../Core/Src/TrayLocalization.c:17:6:TrayLocalization	104	static
+../Core/Src/TrayLocalization.c:10:6:TraySetup	40	static
+../Core/Src/TrayLocalization.c:28:6:TrayLocalization	104	static

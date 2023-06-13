@@ -20,18 +20,26 @@ typedef enum
 
 typedef struct
 {
-	uint16_t waitTime;
+	uint32_t waitTime;
 	uint8_t CmpltLoop;
 	TaskState task;
 	uint8_t holeInd;
 	uint8_t ProxStop;
+	//Homing
 	uint8_t HomingKey;
 	uint16_t HomeCount;
 	uint32_t HomePosOffset;
+	//Base
 	int8_t BaseMode;
+
 	int8_t ControllerEnable;
 	int8_t	JoyEnable;
 	uint8_t testDummy;
+	int32_t SetPointY_Axis;
+	int32_t MaxWorkspace;
+	//For Tray
+	uint8_t Tray_SetTo;
+	uint8_t RunTrayMode;
 
 }OperationVar;
 
@@ -45,7 +53,6 @@ typedef enum
 	PointMode,
 	TrayMode,
 	PreProcess,
-//	TrajectoryCal,
 	ControlLoop,
 	GripperWaiting,
 	WaitingHome,

@@ -13,6 +13,17 @@ void TraySetup(Tray* temp, float32_t x1, float32_t y1, float32_t x2, float32_t y
 	temp->Edge1_Y = y1;
 	temp->Edge2_X = x2;
 	temp->Edge2_Y = y2;
+
+	float32_t Cal_OriginX = x2 * 10;
+	float32_t Cal_OriginY = ( (y2*120.0/8192.0) - 350) * 10;
+	if(Cal_OriginX < 0){
+		Cal_OriginX = 65536 + Cal_OriginX;
+	}
+	if(Cal_OriginY < 0){
+		Cal_OriginY = 65536 + Cal_OriginY;
+	}
+	temp->ForBaseOriginX = Cal_OriginX ;
+	temp->ForBaseOriginY = Cal_OriginY + 10 ;
 }
 void TrayLocalization(Tray* temp)
 {
@@ -40,6 +51,13 @@ void TrayLocalization(Tray* temp)
 	float32_t theta;
 	arm_atan2_f32(deltaY,deltaX,&theta);
 	temp->angle = theta;
+
+	float32_t Cal_Orientation = -(theta * (180/PI) ) - 90;
+	if(Cal_Orientation < 0){
+		Cal_Orientation = Cal_Orientation + 360;
+	}
+	temp->ForBaseOrientation = Cal_Orientation * 100;
+
 	int8_t i;
 	int8_t j;
 	uint8_t ind = 0;

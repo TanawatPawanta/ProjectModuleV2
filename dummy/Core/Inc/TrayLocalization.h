@@ -18,8 +18,12 @@ typedef struct
 	float32_t Edge2_X;
 	float32_t Edge2_Y;
 
+	uint16_t ForBaseOriginX;
+	uint16_t ForBaseOriginY;
+	uint16_t ForBaseOrientation;
+
 	float32_t Holes_X[9];
-	uint32_t Holes_Y[9];
+	float32_t Holes_Y[9];
 	int8_t SetTray;
 	int8_t Flag;
 	float32_t angle;
