@@ -93,7 +93,8 @@ u16u8_t registerFrame[200];
 JoyState SubState = TrayP1;
 int32_t TrayPoint[8];
 //EndEff
-uint8_t PreGripper = 0;
+uint8_t PreState = 0;
+uint32_t Delay = 0;
 
 /* USER CODE END PV */
 
@@ -103,9 +104,9 @@ void SystemClock_Config(void);
 void joyXjog();
 void joyYjog();
 void CollectPosition();
+void EndeffectorCheck();
 int16_t Uint2Int(uint16_t underflow);
-
-void EndEffectorToggle();
+void PickPlace();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -178,12 +179,11 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, VR, 2); // Start ADC
 
 //	//EndEff
-	TestState = SoftReset;
+	testState = SoftReset;
 	Stamp = 1;
 	TestMode();
 
   /* USER CODE END 2 */
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -216,26 +216,66 @@ int main(void)
 		//Set Pick Tray
 		if(registerFrame[0x01].U16 == 1)
 		{
-			registerFrame[0x20].U16 = PickTray.ForBaseOriginX;
-			registerFrame[0x21].U16 = PickTray.ForBaseOriginY;
-			registerFrame[0x22].U16 = PickTray.ForBaseOrientation;
-			registerFrame[0x01].U16 = 0;
-			OpVar.Tray_SetTo = 1;
+			if(registerFrame[0x02].U16 == 1){
+					testState = TestOn;
+					Stamp = 1;
+					TestMode();
+		}
+		registerFrame[0x10].U16 = 1; //Jog of Pick Tray
+		if(TrayPoint[3] != 0) // Y of Right edge have value of Pick tray
+		{
+			//For use
+			TraySetup(&PickTray,TrayPoint[0]/10.0, TrayPoint[1], TrayPoint[2]/10.0, TrayPoint[3]); //Input value to calculate
+
+			//For test
+//				TraySetup(&PickTray,700/10.0, 19084, 1128/10.0, 17380);
+
+			TrayLocalization(&PickTray); //Find 9 Holes of Pick Tray
+			registerFrame[0x20].U16 = PickTray.ForBaseOriginX; //Upload X Pick
+			registerFrame[0x21].U16 = PickTray.ForBaseOriginY; //Upload Y Pick
+			registerFrame[0x22].U16 = PickTray.ForBaseOrientation; //Upload Angle Pick
+			registerFrame[0x10].U16 = 0; //Finish Command
+			registerFrame[0x01].U16 = 0; //Finish Command
+		}
+
+			/*OpVar.Tray_SetTo = 1;
 			Tray_Delay = HAL_GetTick() + 350; // Add delay
 			registerFrame[0x10].U16 = 1; //Jog Pick Set
-			//registerFrame[0x10].U16 = 0; //Jog Pick Reset
+			//registerFrame[0x10].U16 = 0; //Jog Pick Reset*/
 		}
 		//Set Place Tray
 		if(registerFrame[0x01].U16 == 2)
 		{
-			registerFrame[0x23].U16 = PlaceTray.ForBaseOriginX;
-			registerFrame[0x24].U16 = PlaceTray.ForBaseOriginY;
-			registerFrame[0x25].U16 = PlaceTray.ForBaseOrientation;
-			registerFrame[0x01].U16 = 0;
-			OpVar.Tray_SetTo = 1;
+			registerFrame[0x10].U16 = 2; //Jog of Place Tray
+			if(TrayPoint[7] != 0){ // Y of Right edge have value of Place tray
+				//For use
+				TraySetup(&PlaceTray,TrayPoint[4]/10.0, TrayPoint[5], TrayPoint[6]/10.0, TrayPoint[7]);
+				//For test
+//				TraySetup(&PlaceTray,-1083/10.0, 31685, -1369/10.0, 29007);
+				TrayLocalization(&PlaceTray);
+				registerFrame[0x23].U16 = PlaceTray.ForBaseOriginX; //Upload X Place
+				registerFrame[0x24].U16 = PlaceTray.ForBaseOriginY; //Upload Y Place
+				registerFrame[0x25].U16 = PlaceTray.ForBaseOrientation; //Upload Angle Place
+				registerFrame[0x10].U16 = 0; //Finish Command
+				registerFrame[0x01].U16 = 0; //Finish Command
+				//Reset Tray Point
+				SubState = TrayP1;
+				OpVar.Tray_SetTo = 0;
+				for (uint8_t i = 0; i <= 7; i++)
+				{
+					TrayPoint[i] = 0;
+				}
+				//turn off laser
+				if(registerFrame[0x02].U16 == 0){
+					testState = TestOff;
+					Stamp = 1;
+					TestMode();
+				}
+			}
+			/*OpVar.Tray_SetTo = 1;
 			Tray_Delay = HAL_GetTick() + 350; // Add delay
 			registerFrame[0x10].U16 = 2; //Jog Place Set
-			//registerFrame[0x10].U16 = 0; //Jog Place Reset
+			//registerFrame[0x10].U16 = 0; //Jog Place Reset*/
 		}
 		//Delay for Jog
 		if (HAL_GetTick() >= Tray_Delay && OpVar.Tray_SetTo != 0){
@@ -252,6 +292,11 @@ int main(void)
 				OpVar.ControllerEnable = 0;
 				OpVar.JoyEnable = 0;
 				PositionLoop.IsSteady = 0;
+				for (uint8_t i = 0; i <= 7; i++)
+				{
+					TrayPoint[i] = 0;
+				}
+				OpVar.SetPointY_Axis = 0;
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, RESET);
 				SetHome(&OpVar);
 			break;
@@ -266,6 +311,7 @@ int main(void)
 					InitKalmanStruct(&KF,Var_Q,Var_R);
 					PIDSetup(&PositionLoop, 15, 2.2, 0.00001, 10);
 					PIDSetup(&VelocityLoop, 5.0, 0.00000001, 0, 0.00003);
+
 					QuinticVar.start_pos = __HAL_TIM_GET_COUNTER(&htim2);
 					QuinticVar.final_pos = OpVar.MaxWorkspace*0.5 - 5;
 					OpVar.HomingKey = 0;	//Turn off Proximety
@@ -346,74 +392,17 @@ int main(void)
 					//TrayMode from UI After press RUN
 					if(registerFrame[0x01].U16 == 8)
 					{
+						testState = GripOn;
 						Stamp = 1;
-						TestState = GripperModeOn;
 						TestMode();
-
 						OpVar.BaseMode = 0;
 						OpState = Init;
 						OpVar.RunTrayMode = 1;
 
 					}
-					if(TrayPoint[7] != 0)
-					{
-						TraySetup(&PickTray,TrayPoint[0]/10.0, TrayPoint[1], TrayPoint[2]/10.0, TrayPoint[3]);
-						TraySetup(&PlaceTray,TrayPoint[4]/10.0, TrayPoint[5], TrayPoint[6]/10.0, TrayPoint[7]);
-						TrayLocalization(&PickTray);
-						TrayLocalization(&PlaceTray);
-						SubState = TrayP1;
-						for (uint8_t i = 0; i <= 7; i++)
-						{
-							TrayPoint[i] = 0;
-						}
-					}
 
-					//Endeffector control from UI
-					if(registerFrame[0x02].U16 == 1 && PreGripper != 1){
-						Stamp = 1;
-						TestState = TestModeOn;
-						TestMode();
-					}
-
-					else if(registerFrame[0x02].U16 == 0 && PreGripper == 2){
-						Stamp = 1;
-						TestState = GripperModeOff;
-						TestMode();
-					}
-
-					else if(registerFrame[0x02].U16 == 0 && PreGripper == 1){
-						Stamp = 1;
-						TestState = TestModeOff;
-						TestMode();
-					}
-
-					else if(registerFrame[0x02].U16 == 2 && PreGripper != 2){
-						Stamp = 1;
-						TestState = GripperModeOn;
-						TestMode();
-					}
-
-					//Gripper Pick
-					else if(registerFrame[0x02].U16 == 6 && PreGripper != 6 ){
-						Stamp = 1;
-						TestState = PickUp;
-						TestMode();
-
-					}
-
-					//Gripper Place
-					else if(registerFrame[0x02].U16 == 10 && PreGripper != 10){
-						Stamp = 1;
-						TestState = PlaceDown;
-						TestMode();
-
-					}
-
-					PreGripper = registerFrame[0x02].U16;
-					if(PreGripper == 6 || PreGripper == 10){
-						registerFrame[0x02].U16 = 0;
-						PreGripper = 0;
-					}
+					//endeffector
+					EndeffectorCheck();
 				}
 			break;
 
@@ -475,8 +464,8 @@ int main(void)
 					{
 						if(OpVar.BaseMode == 0)	//Tray
 						{
+							PickPlace();
 							OpVar.waitTime = HAL_GetTick() + 2000;
-							//EndEffectorToggle();
 							OpState = GripperWaiting;
 						}
 						else if (OpVar.BaseMode == 1)	//Point
@@ -532,8 +521,20 @@ int main(void)
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 0);
 				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,30*500);
 			break;
-			}
+			case EmergencyStop:
+				OpVar.ControllerEnable = 0;
+				OpVar.JoyEnable = 0;
+				 __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
+				 if(OpVar.EmerPress == 0)
+				 {
+					 testState = EmerExit;
+					 Stamp = 1;
+					 TestMode();
+					 OpState = Init;
+				 }
+			break;
 		}
+	}
 	  else if (OpVar.ProxStop == 1)
 	  {
 		  __HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
@@ -592,6 +593,10 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+		if (GPIO_Pin == GPIO_PIN_2) //Emergency Switch
+		{
+			OpVar.countExt ++;
+		}
 		if(GPIO_Pin == GPIO_PIN_11)
 		{
 			if(OpVar.HomingKey == 1)
@@ -615,7 +620,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			if(OpVar.HomingKey == 1)
 			{
 				__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,0);
-				OpVar.HomingKey = 0;		//Disable Proximety Homing
+				OpVar.HomingKey = 0;		//Disable Proximity Homing
 				OpVar.ProxStop = 0;
 				if(OpState == WaitingHome)
 				{
@@ -636,36 +641,46 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 				OpVar.ProxStop = 1;
 			}
 		}
-
-		if (GPIO_Pin == GPIO_PIN_2){
-			static uint8_t count = 0;
-
-			if(count == 0){
-				Stamp = 1;
-				TestState = GripperEmerTrigger;
-				TestMode();
-				count = 1;
-				OpVar.ProxStop = 1;
-			}
-			else if(count == 1){
-				Stamp = 1;
-				TestState = GripperEmerExit;
-				TestMode();
-				count = 0;
-				OpVar.ProxStop = 0;
-				OpState = Init;
-			}
-		}
 }
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim == &htim4)
 	{
+		//Read FeedBack
 		QEIGetFeedback(&QEIData, 2500);
 		KF.z = QEIData.QEIVelocity;
 		kalman_filter();
 		ZEstimateVelocity = KF.x_hat[1];
+		OpVar.CurrentY_Position = QEIData.QEIPosition*120/8192;
+		OpVar.CurrentY_Velocity = ZEstimateVelocity*120/8192;
+		OpVar.CurrentY_Accelleration = ((KF.x_hat[1] - KF.x_hat_minus[1])* 120/8192) * 2500;
+		//Emergency Check
+		static uint32_t EmrTimestamp = 0;
+		if(HAL_GetTick() >= EmrTimestamp)
+		{
+			EmrTimestamp = HAL_GetTick() + 10;
+			if((OpVar.countExt - OpVar.PreCountExt) == 1)
+			{
+				OpVar.EmerPress = 0;
+				OpVar.PreCountExt = OpVar.countExt;
+			}
+			else if((OpVar.countExt - OpVar.PreCountExt) == 0)
+			{
+				OpVar.EmerPress = OpVar.EmerPress;
+				OpVar.PreCountExt = OpVar.countExt;
+			}
+			else
+			{
+				OpVar.EmerPress = 1;
+				OpVar.PreCountExt = OpVar.countExt;
+				OpState = EmergencyStop;
+				testState = EmerTrig;
+				Stamp = 1;
+				TestMode();
 
+			}
+		}
+		//Cascade Controller
 		if(OpVar.ControllerEnable == 1)
 		{
 			QuinticRun(&QuinticVar,PositionLoop.ESS,0.0004);
@@ -673,97 +688,131 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_3,abs(VelocityLoop.U));
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, VelocityLoop.MotorDir);
 		}
-
+		//JoyStick
 		if(OpVar.JoyEnable == 1)
 		{
 			CheckJoystick();
 			CheckButton();
-			joyYjog();
 			//joyXjog();
+			joyYjog();
 			CollectPosition();
 		}
 	}
 }
-void joyXjog()
-{
-    if (Joy.X == 1) {
-        registerFrame[0x40].U16 = 0x0008;
-    } else if (Joy.X == -1) {
-        registerFrame[0x40].U16 = 0x0004;
-    } else if (Joy.X == 0) {
-        registerFrame[0x40].U16 = 0x0000;
-    }
+void joyXjog() {
 
-    //set home
-    if (Joy.status == 1) {
-        registerFrame[0x40].U16 = 0x0001;
-    }
+	if(enableX){
+		if (Joy.X == 1) {
+			registerFrame[0x40].U16 = 0x0008;
+		} else if (Joy.X == -1) {
+			registerFrame[0x40].U16 = 0x0004;
+		} else if (Joy.X == 0) {
+			registerFrame[0x40].U16 = 0x0000;
+		}
+	}
 }
-void joyYjog()
-{
-    if (Joy.Y == 1) {
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, SET);
-        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 20000);
-    } else if (Joy.Y == -1) {
-        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, RESET);
-        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 20000);
-    } else if (Joy.Y == 0) {
-        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
-    }
 
+void joyYjog() {
+
+	static uint8_t toggleX = 0;
+	switch(StateSpeed){
+	case 0:
+		speed = 30;
+		break;
+	case 1:
+		speed = 60;
+		break;
+	case 2:
+		speed = 90;
+		toggleX = 0;
+		break;
+	case 3:
+		if(enableX == 1 && toggleX == 0){
+			enableX = 0;
+			toggleX = 1;
+		}
+		else if(enableX == 0 && toggleX == 0){
+			enableX = 1;
+			toggleX = 1;
+		}
+		break;
+	}
+
+
+	if (Joy.Y == 1) {
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, RESET);
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, speed * 500);
+	} else if (Joy.Y == -1) {
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, SET);
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, speed * 500);
+	} else if (Joy.Y == 0) {
+
+		__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
+	}
 
 }
-void CollectPosition()
-{
+void CollectPosition() {
 
-    static uint8_t PreReset = 0;
-    if (PreReset == 0 && Joy.status == 3) {
-        SubState = TrayP1;
-        for (uint8_t i = 0; i <= 7; i++) {
-            TrayPoint[i] = 0;
-        }
-    }
+	CheckButton();
+	CheckJoystick();
+	joyXjog();
+	joyYjog();
 
-    static uint8_t PreRec = 0;
+	static uint8_t PreReset = 0;
+	if (PreReset == 0 && Joy.status == 3) {
+		SubState = TrayP1;
+		for (uint8_t i = 0; i <= 7; i++) {
+			TrayPoint[i] = 0;
+		}
+	}
 
-    switch (SubState) {
-    case TrayP1:
+	static uint8_t PreSpeed = 0;
+	if(Joy.status == 1 && PreSpeed == 0){
+		StateSpeed = (StateSpeed + 1 ) % 4 ;
+	}
 
-        if (Joy.status == 2 && PreRec == 0) {
-            SubState = TrayP2;
-            TrayPoint[0] = Uint2Int(registerFrame[0x44].U16);
-            TrayPoint[1] = __HAL_TIM_GET_COUNTER(&htim2);
-        }
-        break;
-    case TrayP2:
+	static uint8_t PreRec = 0;
 
-        if (Joy.status == 2 && PreRec == 0) {
-            SubState = TrayP3;
-            TrayPoint[2] = Uint2Int(registerFrame[0x44].U16);
-            TrayPoint[3] = __HAL_TIM_GET_COUNTER(&htim2);
-        }
-        break;
-    case TrayP3:
+	switch (SubState) {
+	case TrayP1:
 
-        if (Joy.status == 2 && PreRec == 0) {
-            SubState = TrayP4;
-            TrayPoint[4] = Uint2Int(registerFrame[0x44].U16);
-            TrayPoint[5] = __HAL_TIM_GET_COUNTER(&htim2);
+		if (Joy.status == 2 && PreRec == 0) {
+			SubState = TrayP2;
+			TrayPoint[0] = Uint2Int(registerFrame[0x44].U16);
+			TrayPoint[1] = __HAL_TIM_GET_COUNTER(&htim2);
+		}
+		break;
+	case TrayP2:
 
-        }
-        break;
-    case TrayP4:
+		if (Joy.status == 2 && PreRec == 0) {
+			SubState = TrayP3;
+			TrayPoint[2] = Uint2Int(registerFrame[0x44].U16);
+			TrayPoint[3] = __HAL_TIM_GET_COUNTER(&htim2);
+		}
+		break;
+	case TrayP3:
 
-        if (Joy.status == 2 && PreRec == 0) {
-            TrayPoint[6] = Uint2Int(registerFrame[0x44].U16);
-            TrayPoint[7] = __HAL_TIM_GET_COUNTER(&htim2);
-        }
-        break;
+		if (Joy.status == 2 && PreRec == 0) {
+			SubState = TrayP4;
+			TrayPoint[4] = Uint2Int(registerFrame[0x44].U16);
+			TrayPoint[5] = __HAL_TIM_GET_COUNTER(&htim2);
+		}
+		break;
+	case TrayP4:
 
-    }
+		if (Joy.status == 2 && PreRec == 0) {
+			TrayPoint[6] = Uint2Int(registerFrame[0x44].U16);
+			TrayPoint[7] = __HAL_TIM_GET_COUNTER(&htim2);
+		} else if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == 0) {
+			SubState = TrayP1;
+		}
+		break;
 
-    PreReset = Joy.status;
-    PreRec = Joy.status;
+	}
+
+	PreSpeed = Joy.status;
+	PreReset = Joy.status;
+	PreRec = Joy.status;
 }
 
 int16_t Uint2Int(uint16_t underflow)
@@ -781,24 +830,73 @@ int16_t Uint2Int(uint16_t underflow)
 
 }
 
-void EndEffectorToggle(){
-	static uint8_t PiOPl = 0;
-	if(PiOPl == 0)
-	{
+void EndeffectorCheck(){
+
+	if(registerFrame[0x02].U16 == 1 && PreState != 1){
+		testState = TestOn;
 		Stamp = 1;
-		TestState = PickUp;
 		TestMode();
-		PiOPl = 1;
 	}
-	else if(PiOPl == 1)
-	{
+
+	else if(registerFrame[0x02].U16 == 0 && PreState == 1){
+		testState = TestOff;
 		Stamp = 1;
-		TestState = PlaceDown;
 		TestMode();
-		PiOPl = 0;
 	}
+
+	else if(registerFrame[0x02].U16 == 2 && PreState != 2){
+		testState = GripOn;
+		Stamp = 1;
+		TestMode();
+	}
+
+	else if(registerFrame[0x02].U16 == 0 && PreState == 2){
+		testState = GripOff;
+		Stamp = 1;
+		TestMode();
+	}
+
+	else if(registerFrame[0x02].U16 == 6 && PreState != 6){
+		testState = PickUp;
+		Stamp = 1;
+		TestMode();
+		Delay = HAL_GetTick() + 2000;
+	}
+
+	else if(registerFrame[0x02].U16 == 10 && PreState != 10){
+		testState = PlaceDown;
+		Stamp = 1;
+		TestMode();
+		Delay = HAL_GetTick() + 2000;
+	}
+
+	if(HAL_GetTick() >= Delay && (registerFrame[0x02].U16 == 6 || registerFrame[0x02].U16 == 10)){
+		registerFrame[0x02].U16 = 2;
+	}
+
+	PreState = registerFrame[0x02].U16;
 }
 
+void PickPlace(){
+	static uint8_t PPState = 0;
+
+	switch(PPState){
+	case 0:
+		testState = PickUp;
+		Stamp = 1;
+		TestMode();
+
+		PPState = PPState + 1;
+		break;
+	case 1:
+		testState = PlaceDown;
+		Stamp = 1;
+		TestMode();
+
+		PPState = (PPState + 1) % 2;
+		break;
+	}
+}
 /* USER CODE END 4 */
 
 /**

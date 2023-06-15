@@ -7,10 +7,16 @@
 #include "joystick.h"
 
 struct joystick Joy = {0};
+struct position Pick;
+struct position Place;
 
 uint32_t VR[2] = {0};
 int8_t flag = 0;
 int16_t counter = 0;
+
+uint8_t enableX = 0;
+uint8_t StateSpeed = 0;
+uint8_t speed = 30;
 
 void CheckJoystick()
 {
@@ -85,4 +91,3 @@ int CheckButton()
 
 	return Joy.status;
 }
-

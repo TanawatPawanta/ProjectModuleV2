@@ -1,5 +1,5 @@
 /*
- * Endeffector.h
+ * endeffector.h
  *
  *  Created on: Jun 12, 2023
  *      Author: panna
@@ -39,28 +39,13 @@
 #define GripperMode_PickUp		0x5A
 #define GripperMode_PlaceDown	0x69
 
-typedef enum
-{
-	Read_Status,
-	SoftReset,
-	TestModeOn,
-	TestModeOff,
-	GripperModeOn,
-	PickUp,
-	PlaceDown,
-	GripperModeOff,
-	GripperEmerTrigger,
-	GripperEmerExit,
-}EndEffMode;
-
 //Send Stamp
 extern uint8_t Stamp;
 
 //Read Current Status
-extern uint8_t ReadData;
+extern uint16_t ReadData;
 
 extern uint16_t count;
-extern EndEffMode TestState;
 
 extern uint8_t Error_Status;
 extern uint8_t Emergency_Status;
@@ -68,6 +53,20 @@ extern uint8_t TestMode_Status;
 extern uint8_t RunMode_Status;
 extern uint8_t GripperMode_Status;
 
+typedef enum{
+	ReadStatus,
+	SoftReset,
+	TestOn,
+	TestOff,
+	GripOn,
+	PickUp,
+	PlaceDown,
+	GripOff,
+	EmerTrig,
+	EmerExit
+}TestState;
+
+extern TestState testState;
 
 void Endeffector_Read_Status();
 void Endeffector_Update_Status();

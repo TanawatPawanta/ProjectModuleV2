@@ -1,2 +1,2 @@
-../Core/Src/JoyStick.c:15:6:CheckJoystick	4	static
-../Core/Src/JoyStick.c:51:5:CheckButton	8	static
+../Core/Src/JoyStick.c:21:6:CheckJoystick	4	static
+../Core/Src/JoyStick.c:57:5:CheckButton	8	static

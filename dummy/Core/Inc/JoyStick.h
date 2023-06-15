@@ -21,6 +21,13 @@ struct joystick
 	int16_t B2Log;
 	int16_t B3Log;
 };
+struct position
+{
+	int16_t P1[2];
+	int16_t P2[2];
+	int16_t P3[2];
+};
+
 typedef enum
 {
 	TrayP1,
@@ -28,7 +35,6 @@ typedef enum
 	TrayP3,
 	TrayP4,
 }JoyState;
-
 
 extern struct joystick Joy;
 extern struct position Pick;
@@ -38,10 +44,11 @@ extern uint32_t VR[2];
 extern int8_t flag;
 extern int16_t counter;
 
+extern uint8_t speed;
+extern uint8_t StateSpeed;
+extern uint8_t enableX;
+
 void CheckJoystick();
 int CheckButton();
-void ResetJoystick();
-void UpdatePosition();
-void JoyStickRun();
 
 #endif /* INC_JOYSTICK_H_ */

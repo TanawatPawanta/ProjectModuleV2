@@ -20,6 +20,12 @@ typedef enum
 
 typedef struct
 {
+	//YaxisState
+	float32_t CurrentY_Position;
+	float32_t CurrentY_Velocity;
+	float32_t CurrentY_Accelleration;
+	//Controller
+	int8_t ControllerEnable;
 	uint32_t waitTime;
 	uint8_t CmpltLoop;
 	TaskState task;
@@ -29,18 +35,20 @@ typedef struct
 	uint8_t HomingKey;
 	uint16_t HomeCount;
 	uint32_t HomePosOffset;
+	int32_t MaxWorkspace;
 	//Base
 	int8_t BaseMode;
-
-	int8_t ControllerEnable;
+	int32_t SetPointY_Axis;
+	//Joy
 	int8_t	JoyEnable;
 	uint8_t testDummy;
-	int32_t SetPointY_Axis;
-	int32_t MaxWorkspace;
 	//For Tray
 	uint8_t Tray_SetTo;
 	uint8_t RunTrayMode;
-
+	//Emergency Swith
+	uint8_t countExt;
+	uint8_t PreCountExt;
+	uint8_t EmerPress;
 }OperationVar;
 
 typedef enum
@@ -56,6 +64,7 @@ typedef enum
 	ControlLoop,
 	GripperWaiting,
 	WaitingHome,
+	EmergencyStop,
 }OperationState;
 
 void SetHome(OperationVar* temp);

@@ -25,7 +25,7 @@ typedef struct
 	float32_t Holes_X[9];
 	float32_t Holes_Y[9];
 	int8_t SetTray;
-	int8_t Flag;
+	//int8_t Flag;
 	float32_t angle;
 }Tray;
 
