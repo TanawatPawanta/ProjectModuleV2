@@ -23,7 +23,7 @@ void TraySetup(Tray* temp, float32_t x1, float32_t y1, float32_t x2, float32_t y
 		Cal_OriginY = 65536 + Cal_OriginY;
 	}
 	temp->ForBaseOriginX = Cal_OriginX ;
-	temp->ForBaseOriginY = Cal_OriginY + 10 ;
+	temp->ForBaseOriginY = Cal_OriginY - 100 ;
 }
 void TrayLocalization(Tray* temp)
 {

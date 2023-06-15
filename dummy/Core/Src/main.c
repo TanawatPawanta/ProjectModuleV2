@@ -93,7 +93,7 @@ u16u8_t registerFrame[200];
 JoyState SubState = TrayP1;
 int32_t TrayPoint[8];
 //EndEff
-uint8_t onetime = 0;
+uint8_t PreGripper = 0;
 
 /* USER CODE END PV */
 
@@ -104,6 +104,8 @@ void joyXjog();
 void joyYjog();
 void CollectPosition();
 int16_t Uint2Int(uint16_t underflow);
+
+void EndEffectorToggle();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -179,7 +181,6 @@ int main(void)
 	TestState = SoftReset;
 	Stamp = 1;
 	TestMode();
-
 
   /* USER CODE END 2 */
 
@@ -265,7 +266,6 @@ int main(void)
 					InitKalmanStruct(&KF,Var_Q,Var_R);
 					PIDSetup(&PositionLoop, 15, 2.2, 0.00001, 10);
 					PIDSetup(&VelocityLoop, 5.0, 0.00000001, 0, 0.00003);
-
 					QuinticVar.start_pos = __HAL_TIM_GET_COUNTER(&htim2);
 					QuinticVar.final_pos = OpVar.MaxWorkspace*0.5 - 5;
 					OpVar.HomingKey = 0;	//Turn off Proximety
@@ -318,13 +318,6 @@ int main(void)
 				{
 					timestamp = HAL_GetTick() + 10;
 
-					if(!onetime){
-
-						TestState = TestModeOn;
-						Stamp = 1;
-						TestMode();
-						onetime = 1;
-					}
 					//JoyStick
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_10, SET);	//Open Joy Pilot lamp
 
@@ -353,6 +346,10 @@ int main(void)
 					//TrayMode from UI After press RUN
 					if(registerFrame[0x01].U16 == 8)
 					{
+						Stamp = 1;
+						TestState = GripperModeOn;
+						TestMode();
+
 						OpVar.BaseMode = 0;
 						OpState = Init;
 						OpVar.RunTrayMode = 1;
@@ -369,6 +366,53 @@ int main(void)
 						{
 							TrayPoint[i] = 0;
 						}
+					}
+
+					//Endeffector control from UI
+					if(registerFrame[0x02].U16 == 1 && PreGripper != 1){
+						Stamp = 1;
+						TestState = TestModeOn;
+						TestMode();
+					}
+
+					else if(registerFrame[0x02].U16 == 0 && PreGripper == 2){
+						Stamp = 1;
+						TestState = GripperModeOff;
+						TestMode();
+					}
+
+					else if(registerFrame[0x02].U16 == 0 && PreGripper == 1){
+						Stamp = 1;
+						TestState = TestModeOff;
+						TestMode();
+					}
+
+					else if(registerFrame[0x02].U16 == 2 && PreGripper != 2){
+						Stamp = 1;
+						TestState = GripperModeOn;
+						TestMode();
+					}
+
+					//Gripper Pick
+					else if(registerFrame[0x02].U16 == 6 && PreGripper != 6 ){
+						Stamp = 1;
+						TestState = PickUp;
+						TestMode();
+
+					}
+
+					//Gripper Place
+					else if(registerFrame[0x02].U16 == 10 && PreGripper != 10){
+						Stamp = 1;
+						TestState = PlaceDown;
+						TestMode();
+
+					}
+
+					PreGripper = registerFrame[0x02].U16;
+					if(PreGripper == 6 || PreGripper == 10){
+						registerFrame[0x02].U16 = 0;
+						PreGripper = 0;
 					}
 				}
 			break;
@@ -432,6 +476,7 @@ int main(void)
 						if(OpVar.BaseMode == 0)	//Tray
 						{
 							OpVar.waitTime = HAL_GetTick() + 2000;
+							//EndEffectorToggle();
 							OpState = GripperWaiting;
 						}
 						else if (OpVar.BaseMode == 1)	//Point
@@ -591,6 +636,26 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 				OpVar.ProxStop = 1;
 			}
 		}
+
+		if (GPIO_Pin == GPIO_PIN_2){
+			static uint8_t count = 0;
+
+			if(count == 0){
+				Stamp = 1;
+				TestState = GripperEmerTrigger;
+				TestMode();
+				count = 1;
+				OpVar.ProxStop = 1;
+			}
+			else if(count == 1){
+				Stamp = 1;
+				TestState = GripperEmerExit;
+				TestMode();
+				count = 0;
+				OpVar.ProxStop = 0;
+				OpState = Init;
+			}
+		}
 }
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -613,15 +678,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		{
 			CheckJoystick();
 			CheckButton();
-			//joyXjog();
 			joyYjog();
+			//joyXjog();
 			CollectPosition();
 		}
 	}
 }
 void joyXjog()
 {
-
     if (Joy.X == 1) {
         registerFrame[0x40].U16 = 0x0008;
     } else if (Joy.X == -1) {
@@ -647,9 +711,6 @@ void joyYjog()
         __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
     }
 
-//    if (Joy.status == 1) {
-//
-//    }
 
 }
 void CollectPosition()
@@ -719,6 +780,25 @@ int16_t Uint2Int(uint16_t underflow)
     return bitwise;
 
 }
+
+void EndEffectorToggle(){
+	static uint8_t PiOPl = 0;
+	if(PiOPl == 0)
+	{
+		Stamp = 1;
+		TestState = PickUp;
+		TestMode();
+		PiOPl = 1;
+	}
+	else if(PiOPl == 1)
+	{
+		Stamp = 1;
+		TestState = PlaceDown;
+		TestMode();
+		PiOPl = 0;
+	}
+}
+
 /* USER CODE END 4 */
 
 /**
